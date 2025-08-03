@@ -1,16 +1,35 @@
+import { useState } from "react";
 import { Brain } from "lucide-react";
 import { Link } from "react-router-dom";
 import Button from "./ui-components/Button";
 import SearchBar from "./ui-components/SearchBar";
+import { AuthModal } from "./ui-components/auth";
 
 const NavBar = () => {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [defaultTab, setDefaultTab] = useState("signin");
+
   //navigation links - data for routing
   const navigationLinks = [
-    { href: "#quizzes", label: "Quizzes" },
-    { href: "#categories", label: "Categories" },
-    { href: "#leaderboard", label: "Leaderboard" },
-    { href: "#about", label: "About" },
+    { href: "/quizzes", label: "Quizzes" },
+    { href: "/categories", label: "Categories" },
+    { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/about", label: "About" },
   ];
+
+  const openSignIn = () => {
+    setDefaultTab("signin");
+    setIsAuthModalOpen(true);
+  };
+
+  const openSignUp = () => {
+    setDefaultTab("signup");
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+  };
 
   return (
     <>
@@ -33,15 +52,21 @@ const NavBar = () => {
               </Link>
             ))}
           </nav>
-          <div className="flex flex-1 items-center justify-center">
-          </div>
+          <div className="flex flex-1 items-center justify-center"></div>
           <div className="flex items-center space-x-4">
             <SearchBar />
-            <Button text="Sign In" />
-            <Button text="Sign Up" />
+            <Button text="Sign In" onClick={openSignIn} />
+            <Button text="Sign Up" onClick={openSignUp} />
           </div>
         </div>
       </header>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={closeAuthModal}
+        defaultTab={defaultTab}
+      />
     </>
   );
 };
