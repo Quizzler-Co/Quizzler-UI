@@ -1,10 +1,8 @@
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
+import { Star, Trophy, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Badge from "./ui-components/Badge";
-import { Trophy } from "lucide-react";
-import { Users } from "lucide-react";
-import { Star } from "lucide-react";
 
 const Hero = () => {
   return (
@@ -157,6 +155,7 @@ const ShuffleGrid = () => {
     shuffleSquares();
 
     return () => clearTimeout(timeoutRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const shuffleSquares = () => {

@@ -1,5 +1,4 @@
-import React from "react";
-import { Clock, Trophy, Brain, Star, Users, Target } from "lucide-react";
+import { Brain, Clock, Trophy } from "lucide-react";
 
 const Features = () => {
   const features = [
