@@ -13,6 +13,20 @@ import Button from "../ui-components/Button";
 import Input from "../ui-components/Input";
 
 const BlogItem = ({ blog }) => {
+  const handleEdit = () => {
+    window.open(`/blog-form?id=${blog.id}`, "_blank");
+  };
+
+  const handleView = () => {
+    alert(`View blog: ${blog.title}`);
+  };
+
+  const handleDelete = () => {
+    if (window.confirm(`Are you sure you want to delete "${blog.title}"?`)) {
+      alert(`Blog "${blog.title}" deleted`);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "published":
@@ -70,13 +84,13 @@ const BlogItem = ({ blog }) => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleView}>
           <Eye className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleEdit}>
           <Edit3 className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleDelete}>
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
@@ -131,7 +145,10 @@ const BlogManagement = () => {
           <h2 className="text-xl font-bold text-black">Blog Management</h2>
           <p className="text-gray-600">Create and manage blog posts</p>
         </div>
-        <Button className="flex items-center gap-2">
+        <Button
+          className="flex items-center gap-2"
+          onClick={() => window.open("/blog-form", "_blank")}
+        >
           <Plus className="h-4 w-4" />
           Add Blog Post
         </Button>

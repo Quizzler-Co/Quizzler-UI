@@ -1,23 +1,38 @@
+import { Toaster } from "react-hot-toast";
 import { Route, Routes } from "react-router-dom";
-import Home from "./pages/Home";
-import NavBar from "./components/NavBar";
-import Footer from "./components/Footer";
-import Quizzes from "./pages/Quizzes";
-import DashBoard from "./pages/DashBoard";
 import { Dashboard } from "./components/dashboardUi";
+import Footer from "./components/Footer";
+import NavBar from "./components/NavBar";
+import { BlogForm, QuizForm, UserForm } from "./pages/forms";
+import Home from "./pages/Home";
+import Quizzes from "./pages/Quizzes";
 
 const App = () => {
   return (
     <>
-      <div className="flex flex-col min-h-screen">
-        <NavBar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/quizzes" element={<Quizzes />} />
-          <Route path="/admin" element={<Dashboard />} />
-        </Routes>
-        <Footer />
-      </div>
+      <Routes>
+        {/* Form routes without NavBar and Footer */}
+        <Route path="/quiz-form" element={<QuizForm />} />
+        <Route path="/blog-form" element={<BlogForm />} />
+        {/* Admin form routes for users */}
+        <Route path="/admin/forms/user" element={<UserForm />} />
+        {/* Main app routes with NavBar and Footer */}
+        <Route
+          path="/*"
+          element={
+            <div className="flex flex-col min-h-screen">
+              <NavBar />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/quizzes" element={<Quizzes />} />
+                <Route path="/admin" element={<Dashboard />} />
+              </Routes>
+              <Footer />
+            </div>
+          }
+        />
+      </Routes>
+      <Toaster position="top-right" />
     </>
   );
 };

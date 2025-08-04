@@ -1,10 +1,28 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Plus, Eye, Edit3, Trash2, Search, Filter } from "lucide-react";
+import toast from "react-hot-toast";
 import { Card } from "../ui-components/Card";
 import Button from "../ui-components/Button";
 import Input from "../ui-components/Input";
 
 const QuizItem = ({ quiz }) => {
+  const navigate = useNavigate();
+
+  const handleEdit = () => {
+    navigate(`/quiz-form?id=${quiz.id}`);
+  };
+
+  const handleView = () => {
+    toast.success(`Viewing quiz: ${quiz.title}`);
+  };
+
+  const handleDelete = () => {
+    if (window.confirm(`Are you sure you want to delete "${quiz.title}"?`)) {
+      toast.success(`Quiz "${quiz.title}" deleted successfully`);
+    }
+  };
+
   const getDifficultyColor = (difficulty) => {
     switch (difficulty) {
       case "easy":
@@ -61,13 +79,13 @@ const QuizItem = ({ quiz }) => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleView}>
           <Eye className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleEdit}>
           <Edit3 className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleDelete}>
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
@@ -77,6 +95,11 @@ const QuizItem = ({ quiz }) => {
 
 const QuizManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  const handleAddQuiz = () => {
+    navigate("/quiz-form");
+  };
 
   const mockQuizzes = [
     {
@@ -121,7 +144,7 @@ const QuizManagement = () => {
           <h2 className="text-xl font-bold text-black">Quiz Management</h2>
           <p className="text-gray-600">Create, edit, and manage quizzes</p>
         </div>
-        <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2" onClick={handleAddQuiz}>
           <Plus className="h-4 w-4" />
           Add Quiz
         </Button>

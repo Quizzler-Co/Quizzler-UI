@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Eye, Shield, Ban, Search, Filter } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Eye, Shield, Ban, Search, Filter, Plus, Edit } from "lucide-react";
+import toast from "react-hot-toast";
 import { Card } from "../ui-components/Card";
 import Button from "../ui-components/Button";
 import Input from "../ui-components/Input";
@@ -24,7 +26,21 @@ const UserAvatar = ({ name, email }) => {
   );
 };
 
-const UserItem = ({ user }) => {
+const UserItem = ({ user, navigate }) => {
+  const handleEdit = () => {
+    navigate(`/admin/forms/user?id=${user.id}`);
+  };
+
+  const handleView = () => {
+    toast.success(`Viewing user: ${user.name}`);
+  };
+
+  const handleBan = () => {
+    if (window.confirm(`Are you sure you want to ban "${user.name}"?`)) {
+      toast.success(`User "${user.name}" banned successfully`);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "active":
@@ -70,13 +86,13 @@ const UserItem = ({ user }) => {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleView}>
           <Eye className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm">
-          <Shield className="h-4 w-4" />
+        <Button variant="outline" size="sm" onClick={handleEdit}>
+          <Edit className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={handleBan}>
           <Ban className="h-4 w-4" />
         </Button>
       </div>
@@ -85,6 +101,7 @@ const UserItem = ({ user }) => {
 };
 
 const UserManagement = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
 
   const mockUsers = [
@@ -95,6 +112,7 @@ const UserManagement = () => {
       role: "user",
       status: "active",
       quizzesCompleted: 45,
+      totalScore: 3850,
     },
     {
       id: "2",
@@ -103,6 +121,7 @@ const UserManagement = () => {
       role: "user",
       status: "active",
       quizzesCompleted: 32,
+      totalScore: 2890,
     },
     {
       id: "3",
@@ -111,6 +130,7 @@ const UserManagement = () => {
       role: "moderator",
       status: "suspended",
       quizzesCompleted: 78,
+      totalScore: 6420,
     },
   ];
 
@@ -128,6 +148,13 @@ const UserManagement = () => {
           <p className="text-gray-600">Manage user accounts and permissions</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            onClick={() => navigate("/admin/forms/user")}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add User
+          </Button>
           <Button variant="outline" size="sm">
             Export Users
           </Button>
@@ -155,7 +182,7 @@ const UserManagement = () => {
 
       <div className="space-y-4">
         {filteredUsers.map((user) => (
-          <UserItem key={user.id} user={user} />
+          <UserItem key={user.id} user={user} navigate={navigate} />
         ))}
       </div>
     </Card>
