@@ -1,17 +1,19 @@
-import { Brain } from "lucide-react";
+import React from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "../Dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../Tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../Tabs";
 import EmailSignInForm from "./EmailSignInForm";
 import OTPSignInForm from "./OTPSignInForm";
-import SignUpForm from "./SignUpForm";
+import NewSignUpForm from "./SignUpForm";
+import SocialLoginButtons from "./SocialLoginButtons";
+import AuthBenefitsCard from "./AuthBenefitsCard";
 
-const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }) => {
+const NewAuthModal = ({ isOpen, onClose, defaultTab = "signin" }) => {
   const handleEmailSignIn = (data) => {
     console.log("Email sign in:", data);
     onClose();
@@ -33,9 +35,7 @@ const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }) => {
         <div className="p-6">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-center">
-              <span className="mr-2">
-                <Brain />
-              </span>
+              <span className="mr-2">🧠</span>
               Welcome to QuizMaster
             </DialogTitle>
             <DialogDescription>
@@ -71,16 +71,19 @@ const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }) => {
 
             {/* Sign Up Tab */}
             <TabsContent value="signup" className="space-y-4">
-              <SignUpForm onSubmit={handleSignUp} />
+              <NewSignUpForm onSubmit={handleSignUp} />
             </TabsContent>
           </Tabs>
 
-          {/* Agar if needed here are the social login buttons */}
-          {/* <SocialLoginButtons/> */}
+          {/* Social Login Options */}
+          <SocialLoginButtons />
+
+          {/* Benefits */}
+          <AuthBenefitsCard />
         </div>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default AuthModal;
+export default NewAuthModal;
