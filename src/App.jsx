@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import Quizzes from "./pages/Quizzes";
+import DashBoard from "./pages/DashBoard";
 
 const App = () => {
   return (
@@ -12,6 +13,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/quizzes" element={<Quizzes />} />
+          <Route path="/dashboard" element={<DashBoard />} />
         </Routes>
         <Footer />
       </div>

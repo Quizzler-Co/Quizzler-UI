@@ -25,18 +25,18 @@ const Dialog = ({ open, onOpenChange, children }) => {
     }
   };
 
-return (
+  return (
     <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md"
-        onClick={handleOverlayClick}
-        style={{
-            WebkitBackdropFilter: "blur(12px)",
-            backdropFilter: "blur(12px)",
-        }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md"
+      onClick={handleOverlayClick}
+      style={{
+        WebkitBackdropFilter: "blur(12px)",
+        backdropFilter: "blur(12px)",
+      }}
     >
-        {children}
+      {children}
     </div>
-);
+  );
 };
 
 /**

@@ -1,5 +1,4 @@
-import React from "react";
-import { Github, Apple } from "lucide-react";
+import { Apple, X } from "lucide-react";
 
 const SocialLoginButtons = () => {
   const handleGithubLogin = () => {
@@ -26,8 +25,8 @@ const SocialLoginButtons = () => {
           onClick={handleGithubLogin}
           className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg bg-transparent hover:bg-gray-50 transition-colors text-sm font-medium"
         >
-          <Github className="mr-2 h-4 w-4" />
-          GitHub
+          <X className="mr-2 h-4 w-4" />
+          X
         </button>
 
         <button
