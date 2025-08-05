@@ -15,6 +15,7 @@ const NavBar = () => {
     { href: "/quizzes", label: "Quizzes" },
     { href: "/categories", label: "Categories" },
     { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/profile", label: "Profile" },
     { href: "/about", label: "About" },
     { href: "/admin", label: "Admin" },
   ];
@@ -68,7 +69,7 @@ const NavBar = () => {
 
           {/* Spacer */}
           <div className="flex flex-1 items-center justify-center"></div>
-          
+
           <div className="hidden lg:flex items-center mr-3 ">
             <SearchBar />
           </div>

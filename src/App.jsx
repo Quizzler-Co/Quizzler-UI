@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import NavBar from "./components/NavBar";
 import { BlogForm, QuizForm, UserForm } from "./pages/forms";
 import Home from "./pages/Home";
+import Profile from "./pages/Profile";
 import Quizzes from "./pages/Quizzes";
 
 const App = () => {
@@ -26,6 +27,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/quizzes" element={<Quizzes />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<Dashboard />} />
               </Routes>
               <Footer />

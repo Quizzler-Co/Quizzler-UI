@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { useEffect } from "react";
 
 const Select = ({ children, defaultValue, value, onValueChange, ...props }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,7 +9,7 @@ const Select = ({ children, defaultValue, value, onValueChange, ...props }) => {
   );
 
   // Update selected value when value prop changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (value !== undefined) {
       setSelectedValue(value);
     }

@@ -147,21 +147,6 @@ const UserManagement = () => {
           <h2 className="text-xl font-bold text-black">User Management</h2>
           <p className="text-gray-600">Manage user accounts and permissions</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => navigate("/admin/forms/user")}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Add User
-          </Button>
-          <Button variant="outline" size="sm">
-            Export Users
-          </Button>
-          <Button variant="outline" size="sm">
-            Bulk Actions
-          </Button>
-        </div>
       </div>
 
       <div className="flex items-center gap-2 mb-6">
