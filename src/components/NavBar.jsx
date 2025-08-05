@@ -90,14 +90,15 @@ const NavBar = () => {
           </nav>
 
           {/* Desktop Search & Actions */}
-          <div className="hidden lg:flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-3">
+            
             <SearchBar />
             {isUserAuthenticated ? (
               <ProfileAvatar user={currentUser} onLogout={handleLogout} />
             ) : (
-              <div className="flex items-center space-x-2">
-                <Button text="Sign In" onClick={openSignIn} variant="outline" />
-                <Button text="Sign Up" onClick={openSignUp} />
+              <div className="flex items-center space-x-3 w-55">
+                <Button text="Sign In" onClick={openSignIn} variant="outline" size="sm" />
+                <Button text="Sign Up" onClick={openSignUp} variant="outline" size="sm" />
               </div>
             )}
           </div>

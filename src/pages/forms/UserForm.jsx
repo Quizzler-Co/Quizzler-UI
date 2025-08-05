@@ -6,11 +6,7 @@ import { Card } from "../../components/ui-components/Card";
 import Button from "../../components/ui-components/Button";
 import Input from "../../components/ui-components/Input";
 import Label from "../../components/ui-components/Label";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "../../components/ui-components/Avatar";
+import Avatar from "../../components/ui-components/Avatar";
 import {
   Select,
   SelectContent,
@@ -112,15 +108,12 @@ const UserForm = () => {
             {isEdit && formData.name ? (
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={formData.avatar || "/placeholder.svg"} />
-                    <AvatarFallback>
-                      {formData.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Avatar
+                    src={formData.avatar || "/placeholder.svg"}
+                    alt={formData.name}
+                    size="lg"
+                    className="ring-2 ring-gray-200"
+                  />
                   <div>
                     <h3 className="text-lg font-semibold">{formData.name}</h3>
                     <p className="text-gray-600">{formData.email}</p>

@@ -1,7 +1,7 @@
 import React from "react";
 import { Camera } from "lucide-react";
 import { Card, CardContent } from "../ui-components/Card";
-import { Avatar, AvatarImage, AvatarFallback } from "../ui-components/Avatar";
+import Avatar from "../ui-components/Avatar";
 import { SimpleBadge } from "../ui-components/SimpleBadge";
 
 const ProfileHeader = ({
@@ -17,18 +17,12 @@ const ProfileHeader = ({
         <div className="flex flex-col md:flex-row items-center gap-6">
           {/* Avatar Section */}
           <div className="relative group">
-            <Avatar className="h-24 w-24 transition-all duration-300 group-hover:scale-105">
-              {user.avatar ? (
-                <AvatarImage src={user.avatar} alt={user.name} />
-              ) : (
-                <AvatarFallback className="text-xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                  {user.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              )}
-            </Avatar>
+            <Avatar
+              src={user.avatar}
+              alt={user.name}
+              size="lg"
+              className="h-24 w-24 transition-all duration-300 group-hover:scale-105"
+            />
             <label
               className={`absolute -bottom-2 -right-2 bg-black text-white p-2 rounded-full cursor-pointer hover:bg-gray-800 transition-all duration-300 hover:scale-110 ${
                 isUploadingAvatar
