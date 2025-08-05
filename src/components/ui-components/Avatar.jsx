@@ -1,36 +1,26 @@
 import { User } from "lucide-react";
 
-const Avatar = ({ className = "", children, ...props }) => {
+const Avatar = ({ src, alt = "", size = "md", className = "", ...props }) => {
+  const sizeClasses = {
+    sm: "h-6 w-6",
+    md: "h-8 w-8",
+    lg: "h-10 w-10",
+  };
+
   return (
     <div
-      className={`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ${className}`}
+      className={`relative flex shrink-0 overflow-hidden rounded-full ${sizeClasses[size]} ${className}`}
       {...props}
     >
-      {children}
+      {src ? (
+        <img src={src} alt={alt} className="h-full w-full object-cover" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-gray-100">
+          <User className="h-3 w-3 text-gray-500" />
+        </div>
+      )}
     </div>
   );
 };
 
-const AvatarImage = ({ src, alt = "", className = "", ...props }) => {
-  return (
-    <img
-      src={src}
-      alt={alt}
-      className={`aspect-square h-full w-full object-cover ${className}`}
-      {...props}
-    />
-  );
-};
-
-const AvatarFallback = ({ children, className = "", ...props }) => {
-  return (
-    <div
-      className={`flex h-full w-full items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600 ${className}`}
-      {...props}
-    >
-      {children || <User className="h-4 w-4" />}
-    </div>
-  );
-};
-
-export { Avatar, AvatarImage, AvatarFallback };
+export default Avatar;

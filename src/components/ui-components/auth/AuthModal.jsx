@@ -1,4 +1,5 @@
 import { Brain } from "lucide-react";
+import toast from "react-hot-toast";
 import {
   Dialog,
   DialogContent,
@@ -12,9 +13,26 @@ import OTPSignInForm from "./OTPSignInForm";
 import SignUpForm from "./SignUpForm";
 
 const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }) => {
-  const handleEmailSignIn = (data) => {
-    console.log("Email sign in:", data);
-    onClose();
+  const handleEmailSignIn = (result) => {
+    console.log("Email sign in:", result);
+
+    if (result.success) {
+      // Login was successful
+      console.log("Login successful, token stored");
+      toast.success("Logged-in successfully");
+
+      // Close the modal
+      onClose();
+
+      // You can add additional logic here such as:
+      // - Redirecting to dashboard
+      // - Updating global auth state
+      // - Showing success message
+      // window.location.reload(); // If you want to refresh the page
+    } else {
+      // Handle login failure (though this should be handled in the form itself)
+      console.error("Login failed:", result);
+    }
   };
 
   const handleOTPSignIn = (data) => {
@@ -74,9 +92,6 @@ const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }) => {
               <SignUpForm onSubmit={handleSignUp} />
             </TabsContent>
           </Tabs>
-
-          {/* Agar if needed here are the social login buttons */}
-          {/* <SocialLoginButtons/> */}
         </div>
       </DialogContent>
     </Dialog>

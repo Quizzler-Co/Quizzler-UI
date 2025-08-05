@@ -287,6 +287,143 @@ export class UserService {
     return achievements;
   }
 
+  // Authentication API calls
+  static async register(userData) {
+    try {
+      const response = await fetch(
+        "http://localhost:8086/api/v1/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: `${userData.firstName} ${userData.lastName}`.trim(),
+            username: userData.username.trim(), // Using email as username for simplicity
+            email: userData.email,
+            password: userData.password,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Registration failed: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      return {
+        success: true,
+        data: data,
+        message: "Account created successfully",
+      };
+    } catch (error) {
+      throw new Error(error.message || "Network error occurred");
+    }
+  }
+
+  static async login(credentials) {
+    try {
+      const response = await fetch("http://localhost:8086/api/v1/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          usernameOrEmail: credentials.email,
+          password: credentials.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `Login failed: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      // Store the token in localStorage if remember me is checked
+      if (credentials.rememberMe && data.accessToken) {
+        localStorage.setItem("accessToken", data.accessToken);
+        localStorage.setItem("tokenType", data.tokenType);
+        // Store user data
+        if (data.user) {
+          localStorage.setItem("currentUser", JSON.stringify(data.user));
+        }
+      } else if (data.accessToken) {
+        // Store in sessionStorage for session-based auth
+        sessionStorage.setItem("accessToken", data.accessToken);
+        sessionStorage.setItem("tokenType", data.tokenType);
+        // Store user data
+        if (data.user) {
+          sessionStorage.setItem("currentUser", JSON.stringify(data.user));
+        }
+      }
+
+      return {
+        success: true,
+        data: data,
+        message: "Login successful",
+      };
+    } catch (error) {
+      throw new Error(error.message || "Network error occurred");
+    }
+  }
+
+  static logout() {
+    // Remove tokens from both storage types
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("tokenType");
+    localStorage.removeItem("currentUser");
+    sessionStorage.removeItem("accessToken");
+    sessionStorage.removeItem("tokenType");
+    sessionStorage.removeItem("currentUser");
+  }
+
+  static getAuthToken() {
+    // Check localStorage first, then sessionStorage
+    const token =
+      localStorage.getItem("accessToken") ||
+      sessionStorage.getItem("accessToken");
+    const tokenType =
+      localStorage.getItem("tokenType") || sessionStorage.getItem("tokenType");
+
+    if (token && tokenType) {
+      return `${tokenType} ${token}`;
+    }
+    return null;
+  }
+
+  static isAuthenticated() {
+    return !!this.getAuthToken();
+  }
+
+  static getCurrentUser() {
+    // Get user data from localStorage/sessionStorage or return default
+    const userData =
+      localStorage.getItem("currentUser") ||
+      sessionStorage.getItem("currentUser");
+    if (userData) {
+      return JSON.parse(userData);
+    }
+
+    // Return default user if authenticated but no stored user data
+    if (this.isAuthenticated()) {
+      return {
+        name: "User",
+        email: "user@example.com",
+        avatar: null,
+      };
+    }
+
+    return null;
+  }
+
   // Mock API calls - In a real app, these would be actual API calls
   static async updateProfile(profileData) {
     // Simulate API delay

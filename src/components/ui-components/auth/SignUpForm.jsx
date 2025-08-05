@@ -2,15 +2,20 @@ import { Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react";
 import { useState } from "react";
 import Input from "../Input";
 import Label from "../Label";
+import { UserService } from "../../../services/UserService";
+import toast from "react-hot-toast";
 
 const SignUpForm = ({ onSubmit }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
+    username: "",
     password: "",
     confirmPassword: "",
     acceptTerms: false,
@@ -24,10 +29,32 @@ const SignUpForm = ({ onSubmit }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Sign up data:", formData);
-    if (onSubmit) onSubmit(formData);
+    setError("");
+
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await UserService.register(formData);
+      console.log("Registration successful:", result);
+
+      // Call the onSubmit callback if provided
+      if (onSubmit) onSubmit(formData);
+
+      toast.success("Account created successfully! You can now log in.");
+    } catch (error) {
+      console.error("Registration failed:", error);
+      setError(error.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const passwordRequirements = [
@@ -96,6 +123,22 @@ const SignUpForm = ({ onSubmit }) => {
             placeholder="+1 (555) 123-4567"
             className="pl-10"
             value={formData.phone}
+            onChange={handleInputChange}
+            required
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="signup-username">Username</Label>
+        <div className="relative">
+          <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            id="signup-username"
+            name="username"
+            type="text"
+            placeholder="donjon"
+            className="pl-10"
+            value={formData.username}
             onChange={handleInputChange}
             required
           />
@@ -177,6 +220,13 @@ const SignUpForm = ({ onSubmit }) => {
         </div>
       </div>
 
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
+      )}
+
       <div className="flex items-start space-x-2">
         <input
           type="checkbox"
@@ -188,11 +238,11 @@ const SignUpForm = ({ onSubmit }) => {
           required
         />
         <Label htmlFor="terms" className="text-sm">
-          I agree to the{" "}
+          I agree to the
           <button type="button" className="text-black hover:underline">
             Terms of Service
-          </button>{" "}
-          and{" "}
+          </button>
+          and
           <button type="button" className="text-black hover:underline">
             Privacy Policy
           </button>
@@ -201,10 +251,10 @@ const SignUpForm = ({ onSubmit }) => {
 
       <button
         type="submit"
-        disabled={!formData.acceptTerms}
+        disabled={!formData.acceptTerms || loading}
         className="w-full bg-black text-white py-2.5 rounded-lg font-medium hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
       >
-        Create Account
+        {loading ? "Creating Account..." : "Create Account"}
       </button>
     </form>
   );
