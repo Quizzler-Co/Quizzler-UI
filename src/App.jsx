@@ -11,6 +11,7 @@ const App = () => {
   return (
     <>
       <Routes>
+        {/* Admin Routes */}
         {/* Form routes without NavBar and Footer */}
         <Route path="/quiz-form" element={<QuizForm />} />
         <Route path="/blog-form" element={<BlogForm />} />

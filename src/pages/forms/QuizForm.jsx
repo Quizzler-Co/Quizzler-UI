@@ -6,6 +6,8 @@ import { Card } from "../../components/ui-components/Card";
 import Button from "../../components/ui-components/Button";
 import Input from "../../components/ui-components/Input";
 import Label from "../../components/ui-components/Label";
+import { QuestionsManager, QuizPreview } from "../../components/forms";
+import { Question } from "../../models/Question";
 
 const QuizForm = () => {
   const navigate = useNavigate();
@@ -40,8 +42,22 @@ const QuizForm = () => {
     }));
   };
 
+  const handleQuestionsChange = (questions) => {
+    setFormData((prev) => ({
+      ...prev,
+      questions: questions.map((q) => (q.toJSON ? q.toJSON() : q)),
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Validation
+    if (formData.questions.length === 0) {
+      toast.error("Please add at least one question to create a quiz.");
+      return;
+    }
+
     console.log("Form Data:", formData);
     // Here you would typically send the data to your backend
     toast.success(
@@ -162,19 +178,13 @@ const QuizForm = () => {
           </Card>
 
           {/* Questions Section */}
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-black">Questions</h2>
-              <Button type="button" variant="outline">
-                Add Question
-              </Button>
-            </div>
-            <div className="text-center py-12 text-gray-500">
-              <p>
-                No questions added yet. Click "Add Question" to get started.
-              </p>
-            </div>
-          </Card>
+          <QuestionsManager
+            questions={formData.questions.map((q) => Question.fromJSON(q))}
+            onQuestionsChange={handleQuestionsChange}
+          />
+
+          {/* Quiz Preview */}
+          {formData.questions.length > 0 && <QuizPreview quizData={formData} />}
 
           {/* Form Actions */}
           <div className="flex items-center justify-end gap-4">
