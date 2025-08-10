@@ -7,6 +7,8 @@ import { BlogForm, QuizForm, UserForm } from "./pages/forms";
 import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Quizzes from "./pages/Quizzes";
+import AboutUs from "./pages/AboutUs";
+import Leaderboard from "./pages/Leaderboard";
 
 const App = () => {
   return (
@@ -27,8 +29,10 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/quizzes" element={<Quizzes />} />
+                <Route path="/about" element={<AboutUs />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<Dashboard />} />
+                <Route path="/leaderboard/:quizId" element={<Leaderboard />} />
               </Routes>
               <Footer />
             </div>

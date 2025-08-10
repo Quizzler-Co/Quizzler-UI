@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import {
   Tabs,
@@ -15,25 +15,12 @@ import {
 import { UserService } from "../services/UserService";
 
 const Profile = () => {
-  // Mock user data - in real app this would come from auth context/API
-  const [user, setUser] = useState({
-    id: 1,
-    name: "John Doe",
-    email: "john.doe@example.com",
-    avatar: null,
-    joinDate: "2024-01-15",
-    totalQuizzes: 24,
-    averageScore: 78,
-    rank: "Expert",
-    achievements: [
-      { id: 1, name: "First Quiz", icon: "🎯", earnedDate: "2024-01-15" },
-      { id: 2, name: "Speed Demon", icon: "⚡", earnedDate: "2024-02-01" },
-      { id: 3, name: "Knowledge Seeker", icon: "📚", earnedDate: "2024-03-10" },
-      { id: 4, name: "Perfect Score", icon: "💯", earnedDate: "2024-04-05" },
-    ],
-  });
+  // User data from API
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock quiz participation data
+  // Mock quiz participation data - this would also come from API in a real app
   const [participations] = useState([
     {
       id: 1,
@@ -77,11 +64,49 @@ const Profile = () => {
     },
   ]);
 
+  // Fetch user data from API
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const userData = await UserService.getCurrentUser();
+        if (userData) {
+          // Transform API data to match expected structure
+          const transformedUser = {
+            ...userData,
+            // Add default values for fields not in API but expected by UI
+            avatar: userData.avatar || null,
+            joinDate:
+              userData.joinDate || new Date().toISOString().split("T")[0],
+            totalQuizzes: 0, // Will be calculated from participations
+            averageScore: 0, // Will be calculated from participations
+            rank: "Beginner", // Will be calculated from participations
+            achievements: [], // Will be generated from participations
+          };
+          setUser(transformedUser);
+        } else {
+          setError("Unable to load user data. Please try logging in again.");
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+        setError(
+          "Failed to load user data. Please check your connection and try again."
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
   // State for editing profile
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
-    name: user.name,
-    email: user.email,
+    name: "",
+    email: "",
   });
 
   // State for password reset
@@ -104,25 +129,30 @@ const Profile = () => {
 
   // Calculate user statistics using UserService
   const userStats = UserService.calculateUserStats(participations);
-  const userAchievements = UserService.generateAchievements(
-    user,
-    participations
-  );
+  const userAchievements = user
+    ? UserService.generateAchievements(user, participations)
+    : [];
 
-  // Update user rank based on average score
-  const updatedUser = {
-    ...user,
-    rank: UserService.getUserRank(userStats.averageScore),
-    achievements: userAchievements,
-  };
+  // Update user rank based on average score if user data is available
+  const updatedUser = user
+    ? {
+        ...user,
+        rank: UserService.getUserRank(userStats.averageScore),
+        achievements: userAchievements,
+        totalQuizzes: userStats.totalQuizzes,
+        averageScore: userStats.averageScore,
+      }
+    : null;
 
   // Handle profile editing with service validation
   const handleEditProfile = () => {
-    setIsEditingProfile(true);
-    setEditedProfile({
-      name: updatedUser.name,
-      email: updatedUser.email,
-    });
+    if (updatedUser) {
+      setIsEditingProfile(true);
+      setEditedProfile({
+        name: updatedUser.name,
+        email: updatedUser.email,
+      });
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -147,10 +177,12 @@ const Profile = () => {
 
   const handleCancelEdit = () => {
     setIsEditingProfile(false);
-    setEditedProfile({
-      name: updatedUser.name,
-      email: updatedUser.email,
-    });
+    if (updatedUser) {
+      setEditedProfile({
+        name: updatedUser.name,
+        email: updatedUser.email,
+      });
+    }
   };
 
   // Handle password change with service validation
@@ -237,79 +269,113 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8 animate-in fade-in duration-500">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Profile Header */}
-        <ProfileHeader
-          user={updatedUser}
-          userStats={userStats}
-          userAchievements={userAchievements}
-          isUploadingAvatar={isUploadingAvatar}
-          onAvatarUpload={handleAvatarUpload}
-        />
-
-        {/* Main Content Tabs */}
-        <Tabs
-          defaultValue="history"
-          className="animate-in slide-in-from-bottom-6 duration-700"
-        >
-          <TabsList className="mb-6 bg-white shadow-sm border">
-            <TabsTrigger
-              value="history"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600"
-            >
-              Quiz History
-            </TabsTrigger>
-            <TabsTrigger
-              value="settings"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-700 data-[state=active]:to-gray-800"
-            >
-              Account Settings
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Quiz History Tab */}
-          <TabsContent
-            value="history"
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-          >
-            <QuizHistory
-              participations={participations}
-              getRankColor={getRankColor}
-            />
-          </TabsContent>
-
-          {/* Settings Tab */}
-          <TabsContent
-            value="settings"
-            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
-          >
-            <div className="space-y-6">
-              {/* Profile Settings */}
-              <ProfileSettings
-                user={updatedUser}
-                isEditingProfile={isEditingProfile}
-                editedProfile={editedProfile}
-                isUpdatingProfile={isUpdatingProfile}
-                onEditProfile={handleEditProfile}
-                onSaveProfile={handleSaveProfile}
-                onCancelEdit={handleCancelEdit}
-                onProfileChange={handleProfileChange}
-              />
-
-              {/* Password Settings */}
-              <PasswordSettings
-                isChangingPassword={isChangingPassword}
-                passwordData={passwordData}
-                showPasswords={showPasswords}
-                isUpdatingPassword={isUpdatingPassword}
-                onStartPasswordChange={handleStartPasswordChange}
-                onPasswordChange={handlePasswordDataChange}
-                onSavePassword={handlePasswordChange}
-                onCancelPasswordChange={handleCancelPasswordChange}
-                onTogglePasswordVisibility={handleTogglePasswordVisibility}
-              />
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading your profile...</p>
             </div>
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center max-w-md">
+              <div className="text-red-500 text-5xl mb-4">❌</div>
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                Unable to Load Profile
+              </h2>
+              <p className="text-gray-600 mb-4">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content - Only show when user data is loaded */}
+        {!loading && !error && updatedUser && (
+          <>
+            {/* Profile Header */}
+            <ProfileHeader
+              user={updatedUser}
+              userStats={userStats}
+              userAchievements={userAchievements}
+              isUploadingAvatar={isUploadingAvatar}
+              onAvatarUpload={handleAvatarUpload}
+            />
+
+            {/* Main Content Tabs */}
+            <Tabs
+              defaultValue="history"
+              className="animate-in slide-in-from-bottom-6 duration-700"
+            >
+              <TabsList className="mb-6 bg-white shadow-sm border">
+                <TabsTrigger
+                  value="history"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600"
+                >
+                  Quiz History
+                </TabsTrigger>
+                <TabsTrigger
+                  value="settings"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-gray-700 data-[state=active]:to-gray-800"
+                >
+                  Account Settings
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Quiz History Tab */}
+              <TabsContent
+                value="history"
+                className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+              >
+                <QuizHistory
+                  participations={participations}
+                  getRankColor={getRankColor}
+                />
+              </TabsContent>
+
+              {/* Settings Tab */}
+              <TabsContent
+                value="settings"
+                className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+              >
+                <div className="space-y-6">
+                  {/* Profile Settings */}
+                  <ProfileSettings
+                    user={updatedUser}
+                    isEditingProfile={isEditingProfile}
+                    editedProfile={editedProfile}
+                    isUpdatingProfile={isUpdatingProfile}
+                    onEditProfile={handleEditProfile}
+                    onSaveProfile={handleSaveProfile}
+                    onCancelEdit={handleCancelEdit}
+                    onProfileChange={handleProfileChange}
+                  />
+
+                  {/* Password Settings */}
+                  <PasswordSettings
+                    isChangingPassword={isChangingPassword}
+                    passwordData={passwordData}
+                    showPasswords={showPasswords}
+                    isUpdatingPassword={isUpdatingPassword}
+                    onStartPasswordChange={handleStartPasswordChange}
+                    onPasswordChange={handlePasswordDataChange}
+                    onSavePassword={handlePasswordChange}
+                    onCancelPasswordChange={handleCancelPasswordChange}
+                    onTogglePasswordVisibility={handleTogglePasswordVisibility}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
       </div>
     </div>
   );

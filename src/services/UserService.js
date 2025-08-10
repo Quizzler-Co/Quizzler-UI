@@ -351,18 +351,24 @@ export class UserService {
       if (credentials.rememberMe && data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
         localStorage.setItem("tokenType", data.tokenType);
-        // Store user data
-        if (data.user) {
-          localStorage.setItem("currentUser", JSON.stringify(data.user));
-        }
+        // Store user data - user details are now in the root response
+        const userData = {
+          name: data.name,
+          username: data.username,
+          email: data.email,
+        };
+        localStorage.setItem("currentUser", JSON.stringify(userData));
       } else if (data.accessToken) {
         // Store in sessionStorage for session-based auth
         sessionStorage.setItem("accessToken", data.accessToken);
         sessionStorage.setItem("tokenType", data.tokenType);
-        // Store user data
-        if (data.user) {
-          sessionStorage.setItem("currentUser", JSON.stringify(data.user));
-        }
+        // Store user data - user details are now in the root response
+        const userData = {
+          name: data.name,
+          username: data.username,
+          email: data.email,
+        };
+        sessionStorage.setItem("currentUser", JSON.stringify(userData));
       }
 
       return {
@@ -403,8 +409,8 @@ export class UserService {
     return !!this.getAuthToken();
   }
 
-  static getCurrentUser() {
-    // Get user data from localStorage/sessionStorage or return default
+  static getCachedUser() {
+    // Get user data from localStorage/sessionStorage
     const userData =
       localStorage.getItem("currentUser") ||
       sessionStorage.getItem("currentUser");
@@ -412,16 +418,103 @@ export class UserService {
       return JSON.parse(userData);
     }
 
-    // Return default user if authenticated but no stored user data
-    if (this.isAuthenticated()) {
-      return {
-        name: "User",
-        email: "user@example.com",
-        avatar: null,
-      };
-    }
-
     return null;
+  }
+
+  static async getCurrentUser() {
+    try {
+      // Check if user is authenticated
+      if (!this.isAuthenticated()) {
+        return null;
+      }
+
+      // Try to get cached user data first
+      const cachedUser = this.getCachedUser();
+      if (cachedUser) {
+        return cachedUser;
+      }
+
+      // Fetch user data from API
+      const token = this.getAuthToken();
+      const response = await fetch("http://localhost:8086/api/v1/auth/user", {
+        method: "GET",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user data: ${response.status}`);
+      }
+
+      const userData = await response.json();
+
+      // Store the fetched user data
+      const userStorage = localStorage.getItem("accessToken")
+        ? localStorage
+        : sessionStorage;
+      userStorage.setItem("currentUser", JSON.stringify(userData));
+
+      return userData;
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      // If API fails but user is authenticated, return minimal user object
+      if (this.isAuthenticated()) {
+        return {
+          name: "User",
+          email: "user@example.com",
+          avatar: "",
+        };
+      }
+      return null;
+    }
+  }
+
+  // Get all users for user management (Admin functionality)
+  static async getAllUsers() {
+    try {
+      // Check if user is authenticated
+      if (!this.isAuthenticated()) {
+        throw new Error("Authentication required");
+      }
+
+      const token = this.getAuthToken();
+      const response = await fetch("http://localhost:8086/api/v1/auth/users", {
+        method: "GET",
+        headers: {
+          Authorization: token,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Unauthorized: Please log in again");
+        } else if (response.status === 403) {
+          throw new Error("Access denied: Admin privileges required");
+        }
+        throw new Error(
+          `Failed to fetch users: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const users = await response.json();
+
+      // Validate that we received an array
+      if (!Array.isArray(users)) {
+        throw new Error("Invalid response format - expected array of users");
+      }
+
+      return {
+        success: true,
+        data: users,
+        message: "Users fetched successfully",
+      };
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      throw new Error(error.message || "Failed to fetch users");
+    }
   }
 
   // Mock API calls - In a real app, these would be actual API calls
