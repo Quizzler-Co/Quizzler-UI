@@ -8,10 +8,11 @@ const QuizButton = ({
   disabled = false,
   ...props
 }) => {
+  // Responsive size utilities: tighter padding on very small screens
   const sizes = {
-    sm: "px-4 py-2 text-sm",
-    md: "px-6 py-3 text-base",
-    lg: "px-8 py-4 text-lg",
+    sm: "px-3 py-2 text-sm sm:px-4",
+    md: "px-4 py-2 text-sm sm:px-6 sm:py-3 sm:text-base",
+    lg: "px-5 py-3 text-base sm:px-8 sm:py-4 sm:text-lg",
   };
 
   const variants = {
@@ -64,7 +65,7 @@ const QuizButton = ({
         font-bold rounded-lg
         shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
         transition-all duration-200 ease-out
-        flex items-center justify-center gap-2
+  flex items-center justify-center gap-2
         ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
         outline-none focus:ring-4 focus:ring-black/20
         transform

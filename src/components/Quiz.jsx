@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from "react";
 import {
   BookOpen,
   Brain,
   Clock,
-  Play,
-  Star,
-  Target,
-  Users,
   Loader2,
+  Play,
+  Target,
   Trophy,
+  Users,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { UserService } from "../services/UserService";
+import { QuizContainer, QuizPreviewCard } from "./quiz-ui";
 import Badge from "./ui-components/Badge";
-import QuizButton from "./ui-components/QuizButton";
 import {
   Card,
   CardContent,
@@ -20,8 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui-components/Card";
-import { UserService } from "../services/UserService";
-import { QuizContainer, QuizPreviewCard } from "./quiz-ui";
+import QuizButton from "./ui-components/QuizButton";
 
 const Quiz = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -274,9 +273,9 @@ const Quiz = () => {
                     )}
                   </div>
 
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col md:flex-row gap-2 w-full">
                     <QuizButton
-                      className="flex-1"
+                      className="flex-1 w-full"
                       variant="outline"
                       size="md"
                       onClick={(e) => {
@@ -284,10 +283,12 @@ const Quiz = () => {
                         handlePreviewQuiz(quiz);
                       }}
                     >
-                      Preview
+                      <span className="truncate text-xs sm:text-sm md:text-base">
+                        Preview
+                      </span>
                     </QuizButton>
                     <QuizButton
-                      className="flex-1"
+                      className="flex-1 w-full"
                       variant={isActive ? "success" : "secondary"}
                       size="md"
                       disabled={!isActive}
@@ -296,24 +297,30 @@ const Quiz = () => {
                         if (isActive) handleStartQuiz(quiz.id);
                       }}
                     >
-                      <Play className="h-4 w-4" />
-                      {status === "upcoming"
-                        ? "Coming Soon"
-                        : status === "ended"
-                        ? "Quiz Ended"
-                        : "Start Quiz"}
+                      <Play className="h-4 w-4 shrink-0" />
+                      <span className="truncate text-xs sm:text-sm md:text-base">
+                        {status === "upcoming"
+                          ? "Coming Soon"
+                          : status === "ended"
+                          ? "Quiz Ended"
+                          : "Start Quiz"}
+                      </span>
                     </QuizButton>
                     <QuizButton
-                      className="flex-1"
+                      className="flex-1 w-full"
                       variant="outline"
                       size="md"
+                      aria-label="Leaderboard"
+                      title="Leaderboard"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/leaderboard/${quiz.id}`);
                       }}
                     >
-                      <Trophy className="h-4 w-4" />
-                      Leaderboard
+                      <Trophy className="h-4 w-4 shrink-0" />
+                      <span className="truncate text-xs sm:text-sm md:text-base">
+                        Leaderboard
+                      </span>
                     </QuizButton>
                   </div>
                 </CardContent>

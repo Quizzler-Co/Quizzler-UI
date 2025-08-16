@@ -21,13 +21,15 @@ import Badge from "../ui-components/Badge";
 
 const QuizResults = ({ quizData, results, onRetakeQuiz, onGoHome }) => {
   const {
-    answers,
+    answers = {}, // legacy local answers: { questionId: optionIndex }
+    serverAnswers = [], // new backend detailed answers
     timeTaken,
-    totalQuestions,
-    answeredQuestions,
+    totalQuestions: localTotalQuestions,
+    answeredQuestions: localAnswered,
     serverScore,
+    percentage,
     submissionMessage,
-  } = results;
+  } = results || {};
   const navigate = useNavigate();
 
   // Calculate score (since we don't have correct answers, we'll show stats only)
@@ -45,8 +47,16 @@ const QuizResults = ({ quizData, results, onRetakeQuiz, onGoHome }) => {
     }
   };
 
+  // Determine answered count preferring server answers length
+  const answeredCount =
+    serverAnswers.length > 0 ? serverAnswers.length : localAnswered;
+  const totalQuestions =
+    localTotalQuestions || quizData?.questions?.length || 0;
+
   const getCompletionPercentage = () => {
-    return Math.round((answeredQuestions / totalQuestions) * 100);
+    if (percentage !== undefined) return Math.round(percentage);
+    if (!totalQuestions) return 0;
+    return Math.round((answeredCount / totalQuestions) * 100);
   };
 
   const getPerformanceMessage = () => {
@@ -111,9 +121,14 @@ const QuizResults = ({ quizData, results, onRetakeQuiz, onGoHome }) => {
             {submissionMessage && (
               <p className="text-sm text-gray-600">{submissionMessage}</p>
             )}
-            {serverScore !== undefined && (
-              <p className="text-base font-semibold text-blue-700">
-                Score: {serverScore}
+            {(serverScore !== undefined || percentage !== undefined) && (
+              <p className="text-base font-semibold text-blue-700 flex flex-col sm:flex-row items-center justify-center gap-2">
+                {serverScore !== undefined && <span>Score: {serverScore}</span>}
+                {percentage !== undefined && (
+                  <span className="text-sm font-medium text-blue-600">
+                    ({getCompletionPercentage()}%)
+                  </span>
+                )}
               </p>
             )}
           </div>
@@ -122,7 +137,7 @@ const QuizResults = ({ quizData, results, onRetakeQuiz, onGoHome }) => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
-                {answeredQuestions}
+                {answeredCount}
               </div>
               <div className="text-sm text-gray-600">Questions Answered</div>
             </div>
@@ -170,44 +185,93 @@ const QuizResults = ({ quizData, results, onRetakeQuiz, onGoHome }) => {
         <CardContent>
           <div className="space-y-4">
             {quizData.questions.map((question, index) => {
-              const isAnswered = answers[question.id] !== undefined;
-              const selectedOption = answers[question.id];
+              // Find server answer entry for this question
+              const serverEntry = serverAnswers.find(
+                (a) => a.questionId === question.id
+              );
+              const localAnsweredIndex = answers[question.id];
+              // Determine submitted answer text
+              const submittedAnswerText = serverEntry
+                ? serverEntry.submittedAnswer
+                : localAnsweredIndex !== undefined
+                ? question.options[localAnsweredIndex]
+                : undefined;
+              const correctAnswerText = serverEntry?.correctAnswer;
+              const explanation = serverEntry?.explanation;
+              const isAnswered = submittedAnswerText !== undefined;
+              const isCorrect =
+                isAnswered &&
+                correctAnswerText !== undefined &&
+                submittedAnswerText === correctAnswerText;
 
               return (
                 <div
                   key={question.id}
-                  className="border rounded-lg p-4 space-y-3"
+                  className={`border rounded-lg p-4 space-y-3 transition-colors ${
+                    isAnswered
+                      ? isCorrect
+                        ? "border-green-300 bg-green-50"
+                        : "border-red-300 bg-red-50"
+                      : "border-gray-200"
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className="font-medium text-gray-900">
+                      <div className="flex items-center flex-wrap gap-2 mb-2">
+                        <span className="font-medium text-gray-900 mr-2">
                           Question {index + 1}
                         </span>
                         {isAnswered ? (
-                          <Badge variant="success" size="sm">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Answered
-                          </Badge>
+                          isCorrect ? (
+                            <Badge variant="success" size="sm">
+                              <CheckCircle className="h-3 w-3 mr-1" /> Correct
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive" size="sm">
+                              <XCircle className="h-3 w-3 mr-1" /> Incorrect
+                            </Badge>
+                          )
                         ) : (
                           <Badge variant="secondary" size="sm">
-                            <XCircle className="h-3 w-3 mr-1" />
-                            Skipped
+                            <XCircle className="h-3 w-3 mr-1" /> Skipped
+                          </Badge>
+                        )}
+                        {question.difficulty && (
+                          <Badge variant="outline" size="sm">
+                            {question.difficulty}
                           </Badge>
                         )}
                       </div>
-                      <p className="text-gray-700 mb-3">
+                      <p className="text-gray-800 mb-3 leading-relaxed">
                         {question.questionText}
                       </p>
-
                       {isAnswered && (
-                        <div className="bg-blue-50 p-3 rounded-md">
-                          <p className="text-sm text-gray-600 mb-1">
-                            Your answer:
-                          </p>
-                          <p className="text-blue-800 font-medium">
-                            {question.options[selectedOption]}
-                          </p>
+                        <div className="space-y-3">
+                          <div
+                            className={`p-3 rounded-md text-sm border ${
+                              isCorrect
+                                ? "bg-green-100 border-green-300 text-green-800"
+                                : "bg-red-100 border-red-300 text-red-800"
+                            }`}
+                          >
+                            <p className="font-medium mb-1">
+                              Your Answer: {submittedAnswerText}
+                            </p>
+                            {!isCorrect && correctAnswerText && (
+                              <p>
+                                Correct Answer:{" "}
+                                <span className="font-semibold">
+                                  {correctAnswerText}
+                                </span>
+                              </p>
+                            )}
+                          </div>
+                          {explanation && (
+                            <div className="p-3 rounded-md bg-blue-50 border border-blue-200 text-sm text-blue-800">
+                              <p className="font-medium mb-1">Explanation</p>
+                              <p className="leading-snug">{explanation}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -243,9 +307,11 @@ const QuizResults = ({ quizData, results, onRetakeQuiz, onGoHome }) => {
             if (navigator.share) {
               navigator.share({
                 title: `I completed ${quizData.title}!`,
-                text: `I just completed "${
-                  quizData.title
-                }" with ${getCompletionPercentage()}% completion rate!`,
+                text: `I just completed "${quizData.title}" with ${
+                  serverScore !== undefined
+                    ? serverScore + "/" + totalQuestions + " correct"
+                    : getCompletionPercentage() + "%"
+                }!`,
               });
             }
           }}

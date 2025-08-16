@@ -148,30 +148,29 @@ const QuizContainer = ({ quizId, onBackToQuizzes }) => {
         submissionResult = { message: "Quiz submitted" };
       }
 
-      // Attempt to extract score from message if present (e.g., "Quiz submitted successfully. Score: 3")
-      let extractedScore;
-      if (submissionResult.score !== undefined) {
-        extractedScore = submissionResult.score;
-      } else if (typeof submissionResult.message === "string") {
-        const match = submissionResult.message.match(/Score:\s*(\d+)/i);
-        if (match) extractedScore = Number(match[1]);
-      }
+      // Normalize new backend response shape:
+      // {
+      //   participantId, answers:[{questionId, submittedAnswer, correctAnswer, explanation}],
+      //   score, totalQuestions, percentage
+      // }
+      const {
+        answers: serverAnswers,
+        score: serverScore,
+        totalQuestions: serverTotalQuestions,
+        percentage,
+      } = submissionResult || {};
 
-      // Update quiz results state with server score if found
-      if (extractedScore !== undefined) {
-        setQuizResults((prev) => ({
-          ...prev,
-          serverScore: extractedScore,
-          submissionMessage: submissionResult.message,
-          submissionId: participationData.participationId,
-        }));
-      } else {
-        setQuizResults((prev) => ({
-          ...prev,
-          submissionMessage: submissionResult.message,
-          submissionId: participationData.participationId,
-        }));
-      }
+      setQuizResults((prev) => ({
+        ...prev,
+        serverScore: serverScore ?? prev?.serverScore,
+        percentage: percentage ?? prev?.percentage,
+        totalQuestions: serverTotalQuestions ?? prev?.totalQuestions,
+        serverAnswers: Array.isArray(serverAnswers)
+          ? serverAnswers
+          : prev?.serverAnswers,
+        submissionMessage: submissionResult.message || prev?.submissionMessage,
+        submissionId: participationData.participationId,
+      }));
     } catch (err) {
       console.warn("Error submitting quiz results:", err);
       // Don't show error to user as this is optional
