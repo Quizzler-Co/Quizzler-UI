@@ -188,8 +188,7 @@ Security note: Storing tokens in web storage is convenient but exposes them to X
 
 ## License
 
-License to be determined. If this is a public project, consider adding a LICENSE file (MIT, Apache-2.0, etc.). If private, clarify usage terms.
-
+***CDAC***
 ---
 
 Made with ❤️ by the Quizzler team. If this project helps you, consider giving it a ⭐.
