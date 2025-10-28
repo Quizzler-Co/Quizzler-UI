@@ -14,6 +14,31 @@ const NavBar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [userRole, setUserRole] = useState(null);
+
+  // Helper function to extract role from JWT token
+  const getUserRole = () => {
+    const token = UserService.getAuthToken();
+    if (!token) return null;
+
+    try {
+      // Extract token part (remove "Bearer " prefix if present)
+      const actualToken = token.includes("Bearer ") ? token.split(" ")[1] : token;
+      
+      // Decode JWT (base64)
+      const base64Url = actualToken.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+
+      const payload = JSON.parse(jsonPayload);
+      return payload.role || null;
+    } catch (error) {
+      console.error("Error decoding JWT:", error);
+      return null;
+    }
+  };
 
   // Check authentication status on component mount and when auth modal closes
   useEffect(() => {
@@ -22,6 +47,10 @@ const NavBar = () => {
       setIsUserAuthenticated(authStatus);
 
       if (authStatus) {
+        // Extract role from JWT token
+        const role = getUserRole();
+        setUserRole(role);
+
         // First try to get cached user data (synchronous)
         const cachedUser = UserService.getCachedUser();
         if (cachedUser) {
@@ -38,6 +67,7 @@ const NavBar = () => {
         }
       } else {
         setCurrentUser(null);
+        setUserRole(null);
       }
     };
 
@@ -49,8 +79,20 @@ const NavBar = () => {
     { href: "/quizzes", label: "Quizzes" },
     { href: "/leaderboard", label: "Leaderboard" },
     { href: "/about", label: "About" },
-    { href: "/admin", label: "Admin" },
+    { href: "/admin", label: "Admin", adminOnly: true },
   ];
+
+  // Filter navigation links based on user role
+  const getFilteredNavigationLinks = () => {
+    return navigationLinks.filter(link => {
+      if (link.adminOnly) {
+        return userRole === "ROLE_ADMIN";
+      }
+      return true;
+    });
+  };
+
+  const filteredLinks = getFilteredNavigationLinks();
 
   const openSignIn = () => {
     setDefaultTab("signin");
@@ -71,6 +113,7 @@ const NavBar = () => {
     UserService.logout(); // Also clear user data from UserService
     setIsUserAuthenticated(false);
     setCurrentUser(null);
+    setUserRole(null);
     closeMobileMenu();
   };
 
@@ -96,7 +139,7 @@ const NavBar = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
-            {navigationLinks.map((link) => (
+            {filteredLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
@@ -182,7 +225,7 @@ const NavBar = () => {
             <div className="px-4 py-4 space-y-4">
               {/* Mobile Navigation Links */}
               <nav className="space-y-1">
-                {navigationLinks.map((link) => (
+                {filteredLinks.map((link) => (
                   <Link
                     key={link.href}
                     to={link.href}

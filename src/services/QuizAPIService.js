@@ -59,7 +59,14 @@ export class QuizAPIService {
         if (response.status === 401) {
           throw new Error("Unauthorized: Please log in again");
         } else if (response.status === 403) {
-          throw new Error("Access denied: Admin privileges required");
+          // Try to parse access denied DTO
+          try {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || "Access denied: Admin privileges required");
+          } catch (e) {
+            if (e.message) throw e;
+            throw new Error("Access denied: Admin privileges required");
+          }
         } else if (response.status === 404) {
           throw new Error(
             "API endpoint not found. Please check if the backend server is running on localhost:8086"
@@ -229,7 +236,13 @@ export class QuizAPIService {
         } else if (response.status === 401) {
           throw new Error("Unauthorized: Please log in again");
         } else if (response.status === 403) {
-          throw new Error("Access denied");
+          // Try to parse access denied DTO
+          try {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Access denied");
+          } catch {
+            throw new Error("Access denied");
+          }
         }
 
         const errorData = await response.json().catch(() => ({}));
@@ -277,16 +290,26 @@ export class QuizAPIService {
         } else if (response.status === 401) {
           throw new Error("Unauthorized: Please log in again");
         } else if (response.status === 403) {
-          throw new Error("Access denied");
+          // Parse access denied DTO
+          try {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Access denied");
+          } catch {
+            throw new Error("Access denied");
+          }
         }
         throw new Error(
           `Failed to delete quiz: ${response.status} ${response.statusText}`
         );
       }
 
+      // Parse response (now returns DTO, not string)
+      const result = await response.json();
+      
       return {
-        success: true,
-        message: "Quiz deleted successfully",
+        success: result.success !== false, // handle both old string and new DTO
+        data: result,
+        message: result.message || "Quiz deleted successfully",
       };
     } catch (error) {
       console.error("Error deleting quiz:", error);
