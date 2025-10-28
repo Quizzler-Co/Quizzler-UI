@@ -135,8 +135,16 @@ const QuizForm = () => {
         console.log("Quiz creation response:", response);
 
         // Show success message based on response
-        const successMessage =
-          response.data?.message || "Quiz created successfully!";
+        // Handle both old string response and new DTO response
+        const responseData = response.data;
+        let successMessage = "Quiz created successfully!";
+        
+        if (responseData.message) {
+          successMessage = responseData.message;
+        } else if (responseData.quizId) {
+          successMessage = `Quiz created successfully! ID: ${responseData.quizId}`;
+        }
+        
         toast.success(successMessage);
       }
 

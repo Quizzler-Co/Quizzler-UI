@@ -50,10 +50,10 @@ const QuizItem = ({ quiz, onQuizDeleted }) => {
 
       const data = await response.json();
 
-      if (data.success) {
-        toast.success(
-          data.message || `Quiz "${quiz.title}" deleted successfully`
-        );
+      // Handle both old string response and new DTO response
+      if (data.success || data.operation === "deleted") {
+        const message = data.message || `Quiz "${quiz.title}" deleted successfully`;
+        toast.success(message);
         // Call the callback to refresh the quiz list
         if (onQuizDeleted) {
           onQuizDeleted(quiz.id);

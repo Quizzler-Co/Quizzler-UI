@@ -35,13 +35,6 @@ const StatsOverview = () => {
       changeText: "from last month",
     },
     {
-      title: "Blog Posts",
-      value: "89",
-      icon: FileText,
-      change: "+5%",
-      changeText: "from last month",
-    },
-    {
       title: "Active Users",
       value: "12,450",
       icon: TrendingUp,
