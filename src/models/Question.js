@@ -6,6 +6,7 @@
 export class Question {
   constructor(data = {}) {
     this.id = data.id || null;
+    this.type = data.type || "MCQ"; // 'MCQ' | 'CODING'
     this.question = data.question || "";
     this.options = data.options || ["", "", "", ""];
     this.correctAnswer = data.correctAnswer || 0;
@@ -15,10 +16,29 @@ export class Question {
     this.points = data.points || 1;
     this.timeLimit = data.timeLimit || 30;
     this.tags = data.tags || [];
+    
+    // Coding question fields
+    this.problemId = data.problemId || null;
+    this.methodName = data.methodName || "";
+    this.parameterTypes = data.parameterTypes || "";
+    this.returnType = data.returnType || "";
+    this.inputType = data.inputType || "";
+    this.outputType = data.outputType || "";
   }
 
   // Validation methods
   isValid() {
+    if (this.type === "CODING") {
+      return (
+        this.problemId !== null &&
+        this.problemId !== "" &&
+        this.methodName.trim() !== "" &&
+        this.returnType.trim() !== "" &&
+        this.category.trim() !== ""
+      );
+    }
+    
+    // MCQ validation
     return (
       this.question.trim() !== "" &&
       this.options.every((option) => option.trim() !== "") &&
@@ -33,6 +53,23 @@ export class Question {
   getValidationErrors() {
     const errors = [];
 
+    if (this.type === "CODING") {
+      if (!this.problemId || this.problemId === "") {
+        errors.push("Problem selection is required");
+      }
+      if (!this.methodName.trim()) {
+        errors.push("Method name is required");
+      }
+      if (!this.returnType.trim()) {
+        errors.push("Return type is required");
+      }
+      if (!this.category.trim()) {
+        errors.push("Category is required");
+      }
+      return errors;
+    }
+
+    // MCQ validation
     if (!this.question.trim()) {
       errors.push("Question text is required");
     }
@@ -58,17 +95,34 @@ export class Question {
 
   // Convert to JSON for API calls
   toJSON() {
-    return {
+    const base = {
       id: this.id,
-      question: this.question,
-      options: this.options,
-      correctAnswer: this.correctAnswer,
+      type: this.type,
       category: this.category,
       difficulty: this.difficulty,
       explanation: this.explanation,
       points: this.points,
       timeLimit: this.timeLimit,
       tags: this.tags,
+    };
+
+    if (this.type === "CODING") {
+      return {
+        ...base,
+        problemId: this.problemId,
+        methodName: this.methodName,
+        parameterTypes: this.parameterTypes,
+        returnType: this.returnType,
+        inputType: this.inputType,
+        outputType: this.outputType,
+      };
+    }
+
+    return {
+      ...base,
+      question: this.question,
+      options: this.options,
+      correctAnswer: this.correctAnswer,
     };
   }
 
@@ -85,6 +139,8 @@ export class Question {
 
 // Question constants
 export const QUESTION_TYPES = {
+  MCQ: "MCQ",
+  CODING: "CODING",
   MULTIPLE_CHOICE: "multiple_choice",
   TRUE_FALSE: "true_false",
   FILL_IN_BLANK: "fill_in_blank",

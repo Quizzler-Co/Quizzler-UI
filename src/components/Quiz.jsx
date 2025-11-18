@@ -273,32 +273,32 @@ const Quiz = () => {
                     )}
                   </div>
 
-                  <div className="flex flex-col md:flex-row gap-2 w-full">
+                  <div className="flex flex-col md:flex-row gap-2 w-full min-w-0">
                     <QuizButton
-                      className="flex-1 w-full"
+                      className="flex-1 w-full min-w-0"
                       variant="outline"
-                      size="md"
+                      size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         handlePreviewQuiz(quiz);
                       }}
                     >
-                      <span className="truncate text-xs sm:text-sm md:text-base">
+                      <span className="text-[10px] sm:text-xs md:text-sm">
                         Preview
                       </span>
                     </QuizButton>
                     <QuizButton
-                      className="flex-1 w-full"
+                      className="flex-1 w-full min-w-0"
                       variant={isActive ? "success" : "secondary"}
-                      size="md"
+                      size="sm"
                       disabled={!isActive}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (isActive) handleStartQuiz(quiz.id);
                       }}
                     >
-                      <Play className="h-4 w-4 shrink-0" />
-                      <span className="truncate text-xs sm:text-sm md:text-base">
+                      <Play className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                      <span className="text-[10px] sm:text-xs md:text-sm whitespace-nowrap">
                         {status === "upcoming"
                           ? "Coming Soon"
                           : status === "ended"
@@ -307,9 +307,9 @@ const Quiz = () => {
                       </span>
                     </QuizButton>
                     <QuizButton
-                      className="flex-1 w-full"
+                      className="flex-1 w-full min-w-0"
                       variant="outline"
-                      size="md"
+                      size="sm"
                       aria-label="Leaderboard"
                       title="Leaderboard"
                       onClick={(e) => {
@@ -317,8 +317,8 @@ const Quiz = () => {
                         navigate(`/leaderboard/${quiz.id}`);
                       }}
                     >
-                      <Trophy className="h-4 w-4 shrink-0" />
-                      <span className="truncate text-xs sm:text-sm md:text-base">
+                      <Trophy className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                      <span className="text-[10px] sm:text-xs md:text-sm whitespace-nowrap">
                         Leaderboard
                       </span>
                     </QuizButton>

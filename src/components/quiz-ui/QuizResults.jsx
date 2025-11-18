@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Home,
   Share2,
+  Code2,
 } from "lucide-react";
 import {
   Card,
@@ -18,10 +19,12 @@ import {
 } from "../ui-components/Card";
 import Button from "../ui-components/Button";
 import Badge from "../ui-components/Badge";
+import SubmissionResult from "../SubmissionResult";
 
 const QuizResults = ({ quizData, results, onRetakeQuiz, onGoHome }) => {
   const {
     answers = {}, // legacy local answers: { questionId: optionIndex }
+    codingSolutions = {}, // coding question solutions: { questionId: { code, submissionResult } }
     serverAnswers = [], // new backend detailed answers
     timeTaken,
     totalQuestions: localTotalQuestions,
@@ -47,9 +50,10 @@ const QuizResults = ({ quizData, results, onRetakeQuiz, onGoHome }) => {
     }
   };
 
-  // Determine answered count preferring server answers length
-  const answeredCount =
-    serverAnswers.length > 0 ? serverAnswers.length : localAnswered;
+  // Determine answered count including coding solutions
+  const codingAnsweredCount = Object.keys(codingSolutions || {}).length;
+  const mcqAnsweredCount = serverAnswers.length > 0 ? serverAnswers.length : Object.keys(answers || {}).length;
+  const answeredCount = mcqAnsweredCount + codingAnsweredCount;
   const totalQuestions =
     localTotalQuestions || quizData?.questions?.length || 0;
 
@@ -185,16 +189,101 @@ const QuizResults = ({ quizData, results, onRetakeQuiz, onGoHome }) => {
         <CardContent>
           <div className="space-y-4">
             {quizData.questions.map((question, index) => {
-              // Find server answer entry for this question
+              const isCoding = question.type === "CODING";
+              
+              // Handle coding questions
+              if (isCoding) {
+                const solution = codingSolutions[question.id];
+                const isAnswered = solution !== undefined;
+                const submissionResult = solution?.submissionResult;
+                const verdict = submissionResult?.verdict;
+                const isAccepted = verdict === "ACCEPTED";
+
+                return (
+                  <div
+                    key={question.id}
+                    className={`border rounded-lg p-4 space-y-3 transition-colors ${
+                      isAnswered
+                        ? isAccepted
+                          ? "border-green-300 bg-green-50"
+                          : "border-orange-300 bg-orange-50"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center flex-wrap gap-2 mb-2">
+                          <span className="font-medium text-gray-900 mr-2 flex items-center gap-2">
+                            <Code2 className="h-4 w-4" />
+                            Question {index + 1} (Coding)
+                          </span>
+                          {isAnswered ? (
+                            isAccepted ? (
+                              <Badge variant="success" size="sm">
+                                <CheckCircle className="h-3 w-3 mr-1" /> Accepted
+                              </Badge>
+                            ) : (
+                              <Badge variant="warning" size="sm">
+                                <XCircle className="h-3 w-3 mr-1" /> {verdict?.replace("_", " ") || "Not Accepted"}
+                              </Badge>
+                            )
+                          ) : (
+                            <Badge variant="secondary" size="sm">
+                              <XCircle className="h-3 w-3 mr-1" /> Not Submitted
+                            </Badge>
+                          )}
+                          {question.difficulty && (
+                            <Badge variant="outline" size="sm">
+                              {question.difficulty}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-gray-800 mb-3 leading-relaxed">
+                          <p className="font-semibold mb-2">{question.title || "Coding Problem"}</p>
+                          {question.description && (
+                            <p className="text-sm text-gray-600 mb-2">{question.description}</p>
+                          )}
+                          {question.methodName && question.returnType && (
+                            <div className="bg-gray-100 p-2 rounded text-sm font-mono mb-2">
+                              <code>
+                                public {question.returnType} {question.methodName}(
+                                {question.parameterTypes || "input"} input)
+                              </code>
+                            </div>
+                          )}
+                        </div>
+                        {isAnswered && (
+                          <div className="space-y-3">
+                            {submissionResult && (
+                              <SubmissionResult result={submissionResult} />
+                            )}
+                            {solution.code && (
+                              <div className="mt-3">
+                                <p className="text-sm font-semibold text-gray-700 mb-2">Submitted Code:</p>
+                                <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
+                                  <pre className="text-xs font-mono whitespace-pre-wrap">
+                                    {solution.code}
+                                  </pre>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Handle MCQ questions (existing logic)
               const serverEntry = serverAnswers.find(
                 (a) => a.questionId === question.id
               );
               const localAnsweredIndex = answers[question.id];
-              // Determine submitted answer text
               const submittedAnswerText = serverEntry
                 ? serverEntry.submittedAnswer
                 : localAnsweredIndex !== undefined
-                ? question.options[localAnsweredIndex]
+                ? question.options?.[localAnsweredIndex]
                 : undefined;
               const correctAnswerText = serverEntry?.correctAnswer;
               const explanation = serverEntry?.explanation;
@@ -243,7 +332,7 @@ const QuizResults = ({ quizData, results, onRetakeQuiz, onGoHome }) => {
                         )}
                       </div>
                       <p className="text-gray-800 mb-3 leading-relaxed">
-                        {question.questionText}
+                        {question.questionText || question.question}
                       </p>
                       {isAnswered && (
                         <div className="space-y-3">

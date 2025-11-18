@@ -327,22 +327,72 @@ export class UserService {
 
   static async login(credentials) {
     try {
+      const requestBody = {
+        usernameOrEmail: credentials.email,
+        password: credentials.password,
+      };
+      
+      console.log("Login request:", {
+        url: "http://localhost:8086/api/v1/auth/login",
+        body: { ...requestBody, password: "***" }, // Don't log actual password
+      });
+
       const response = await fetch("http://localhost:8086/api/v1/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          usernameOrEmail: credentials.email,
-          password: credentials.password,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log("Login response:", {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        ok: response.ok,
+      });
+
+      // Try to read response body for debugging even on error
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `Login failed: ${response.status}`
-        );
+        const responseText = await response.clone().text().catch(() => "Unable to read response");
+        console.error("Error response body:", responseText);
+        let errorData = {};
+        try {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            errorData = await response.json();
+          } else {
+            const text = await response.text();
+            errorData = { message: text || `Login failed: ${response.status}` };
+          }
+        } catch (parseError) {
+          console.error("Error parsing error response:", parseError);
+          errorData = { message: `Login failed: ${response.status} ${response.statusText}` };
+        }
+        
+        // Log more details for debugging
+        console.error("Login error details:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+        
+        // Provide user-friendly error messages based on status code
+        let errorMessage = errorData.message || errorData.error;
+        
+        if (response.status === 500) {
+          errorMessage = errorMessage || "Service temporarily unavailable. The authentication service may be experiencing issues. Please try again in a moment.";
+        } else if (response.status === 503) {
+          errorMessage = errorMessage || "Service unavailable. Please try again later.";
+        } else if (response.status === 504) {
+          errorMessage = errorMessage || "Request timeout. The service took too long to respond. Please try again.";
+        } else if (response.status === 401) {
+          errorMessage = errorMessage || "Invalid email or password. Please check your credentials and try again.";
+        } else if (response.status === 403) {
+          errorMessage = errorMessage || "Access denied. Please contact support.";
+        }
+        
+        throw new Error(errorMessage || `Login failed: ${response.status}`);
       }
 
       const data = await response.json();

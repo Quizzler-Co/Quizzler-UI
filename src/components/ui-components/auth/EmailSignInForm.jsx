@@ -70,7 +70,21 @@ const EmailSignInForm = ({ onSubmit }) => {
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError(err.message || "Login failed. Please try again.");
+      // Provide more helpful error messages
+      let errorMessage = err.message || "Login failed. Please try again.";
+      
+      // Check if it's a network/service unavailable error
+      if (errorMessage.includes("Service temporarily unavailable") || 
+          errorMessage.includes("Service unavailable") ||
+          errorMessage.includes("unavailable")) {
+        errorMessage = "The authentication service is currently unavailable. Please try again in a few moments.";
+      } else if (errorMessage.includes("timeout") || errorMessage.includes("took too long")) {
+        errorMessage = "The request timed out. Please check your internet connection and try again.";
+      } else if (errorMessage.includes("Failed to fetch") || errorMessage.includes("Network")) {
+        errorMessage = "Unable to connect to the server. Please check your internet connection.";
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

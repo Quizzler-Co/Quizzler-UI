@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Plus, Check, AlertCircle } from "lucide-react";
+import { X, Plus, Check, AlertCircle, Code2, Loader2 } from "lucide-react";
 import { Card } from "../ui-components/Card";
 import Button from "../ui-components/Button";
 import Input from "../ui-components/Input";
@@ -7,11 +7,14 @@ import Label from "../ui-components/Label";
 import Badge from "../ui-components/Badge";
 import {
   Question,
+  QUESTION_TYPES,
   DIFFICULTIES,
   CATEGORIES,
   getDifficultyColor,
   getCategoryIcon,
 } from "../../models/Question";
+import { JudgeService } from "../../services/JudgeService";
+import toast from "react-hot-toast";
 
 const QuestionForm = ({
   question,
@@ -25,17 +28,108 @@ const QuestionForm = ({
   );
   const [errors, setErrors] = useState([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [availableProblems, setAvailableProblems] = useState([]);
+  const [loadingProblems, setLoadingProblems] = useState(false);
+  const [selectedProblem, setSelectedProblem] = useState(null);
 
   useEffect(() => {
     if (question) {
-      setQuestionData(question.clone());
+      const cloned = question.clone();
+      setQuestionData(cloned);
+      if (cloned.type === "CODING" && cloned.problemId) {
+        loadProblemDetails(cloned.problemId);
+      }
     }
   }, [question]);
+
+  useEffect(() => {
+    if (questionData.type === "CODING") {
+      loadProblems();
+    }
+  }, [questionData.type]);
+
+  const loadProblems = async () => {
+    setLoadingProblems(true);
+    try {
+      const response = await JudgeService.getAllProblems();
+      setAvailableProblems(response.data || []);
+    } catch (error) {
+      toast.error(error.message || "Failed to load problems");
+      setAvailableProblems([]);
+    } finally {
+      setLoadingProblems(false);
+    }
+  };
+
+  const loadProblemDetails = async (problemId) => {
+    try {
+      const response = await JudgeService.getProblem(problemId);
+      const problem = response.data;
+      setSelectedProblem(problem);
+      
+      // Auto-populate question fields from problem
+      setQuestionData((prev) => {
+        const newQuestion = prev.clone();
+        newQuestion.problemId = problem.id;
+        newQuestion.methodName = problem.methodName || "";
+        newQuestion.parameterTypes = problem.parameterTypes || "";
+        newQuestion.returnType = problem.returnType || "";
+        newQuestion.inputType = problem.inputType || "";
+        newQuestion.outputType = problem.outputType || "";
+        newQuestion.difficulty = problem.difficulty?.toLowerCase() || "medium";
+        newQuestion.category = questionData.category || "technology";
+        return newQuestion;
+      });
+    } catch (error) {
+      toast.error(error.message || "Failed to load problem details");
+    }
+  };
+
+  const handleProblemSelect = (problemId) => {
+    if (problemId) {
+      loadProblemDetails(problemId);
+    } else {
+      setSelectedProblem(null);
+      setQuestionData((prev) => {
+        const newQuestion = prev.clone();
+        newQuestion.problemId = null;
+        newQuestion.methodName = "";
+        newQuestion.parameterTypes = "";
+        newQuestion.returnType = "";
+        newQuestion.inputType = "";
+        newQuestion.outputType = "";
+        return newQuestion;
+      });
+    }
+  };
 
   const handleInputChange = (field, value) => {
     setQuestionData((prev) => {
       const newQuestion = prev.clone();
       newQuestion[field] = value;
+      
+      // Reset type-specific fields when switching types
+      if (field === "type") {
+        if (value === "MCQ") {
+          newQuestion.problemId = null;
+          newQuestion.methodName = "";
+          newQuestion.parameterTypes = "";
+          newQuestion.returnType = "";
+          newQuestion.inputType = "";
+          newQuestion.outputType = "";
+          if (!newQuestion.question) {
+            newQuestion.question = "";
+          }
+          if (!newQuestion.options || newQuestion.options.length === 0) {
+            newQuestion.options = ["", "", "", ""];
+          }
+        } else if (value === "CODING") {
+          newQuestion.question = "";
+          newQuestion.options = [];
+          newQuestion.correctAnswer = 0;
+        }
+      }
+      
       return newQuestion;
     });
 
@@ -102,51 +196,92 @@ const QuestionForm = ({
     }
   };
 
-  const PreviewCard = () => (
-    <Card className="p-4 bg-blue-50 border-blue-200">
-      <h4 className="font-semibold mb-3 flex items-center gap-2">
-        <span>{getCategoryIcon(questionData.category)}</span>
-        Question Preview
-        <Badge
-          size="sm"
-          className={getDifficultyColor(questionData.difficulty)}
-        >
-          {questionData.difficulty}
-        </Badge>
-      </h4>
-      <div className="space-y-3">
-        <p className="font-medium">{questionData.question}</p>
-        <div className="space-y-2">
-          {questionData.options.map((option, index) => (
-            <div
-              key={index}
-              className={`p-3 rounded-lg border-2 ${
-                index === questionData.correctAnswer
-                  ? "border-green-500 bg-green-50"
-                  : "border-gray-200 bg-white"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                {index === questionData.correctAnswer && (
-                  <Check className="h-4 w-4 text-green-600" />
+  const PreviewCard = () => {
+    if (questionData.type === "CODING") {
+      return (
+        <Card className="p-4 bg-blue-50 border-blue-200">
+          <h4 className="font-semibold mb-3 flex items-center gap-2">
+            <Code2 className="h-4 w-4" />
+            Coding Question Preview
+            {questionData.difficulty && (
+              <Badge
+                size="sm"
+                className={getDifficultyColor(questionData.difficulty)}
+              >
+                {questionData.difficulty}
+              </Badge>
+            )}
+          </h4>
+          <div className="space-y-3">
+            {selectedProblem ? (
+              <>
+                <p className="font-medium">{selectedProblem.title}</p>
+                {selectedProblem.description && (
+                  <p className="text-sm text-gray-700">
+                    {selectedProblem.description.substring(0, 200)}...
+                  </p>
                 )}
-                <span>
-                  {String.fromCharCode(65 + index)}. {option}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-        {questionData.explanation && (
-          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-            <p className="text-sm text-gray-700">
-              <strong>Explanation:</strong> {questionData.explanation}
-            </p>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <code className="text-sm">
+                    public {questionData.returnType} {questionData.methodName}(
+                    {questionData.parameterTypes} input)
+                  </code>
+                </div>
+              </>
+            ) : (
+              <p className="text-gray-600">Select a problem to preview</p>
+            )}
           </div>
-        )}
-      </div>
-    </Card>
-  );
+        </Card>
+      );
+    }
+
+    return (
+      <Card className="p-4 bg-blue-50 border-blue-200">
+        <h4 className="font-semibold mb-3 flex items-center gap-2">
+          <span>{getCategoryIcon(questionData.category)}</span>
+          Question Preview
+          <Badge
+            size="sm"
+            className={getDifficultyColor(questionData.difficulty)}
+          >
+            {questionData.difficulty}
+          </Badge>
+        </h4>
+        <div className="space-y-3">
+          <p className="font-medium">{questionData.question}</p>
+          <div className="space-y-2">
+            {questionData.options.map((option, index) => (
+              <div
+                key={index}
+                className={`p-3 rounded-lg border-2 ${
+                  index === questionData.correctAnswer
+                    ? "border-green-500 bg-green-50"
+                    : "border-gray-200 bg-white"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {index === questionData.correctAnswer && (
+                    <Check className="h-4 w-4 text-green-600" />
+                  )}
+                  <span>
+                    {String.fromCharCode(65 + index)}. {option}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {questionData.explanation && (
+            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-700">
+                <strong>Explanation:</strong> {questionData.explanation}
+              </p>
+            </div>
+          )}
+        </div>
+      </Card>
+    );
+  };
 
   return (
     <Card className="p-6">
@@ -195,9 +330,91 @@ const QuestionForm = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
-          {/* Question Text */}
+          {/* Question Type Selector */}
           <div className="space-y-2">
-            <Label htmlFor="question">Question Text *</Label>
+            <Label htmlFor="questionType">Question Type *</Label>
+            <select
+              id="questionType"
+              value={questionData.type || "MCQ"}
+              onChange={(e) => handleInputChange("type", e.target.value)}
+              className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200"
+            >
+              <option value={QUESTION_TYPES.MCQ}>Multiple Choice (MCQ)</option>
+              <option value={QUESTION_TYPES.CODING}>Coding Question</option>
+            </select>
+          </div>
+
+          {/* Coding Question Fields */}
+          {questionData.type === "CODING" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="problemId">Select Problem *</Label>
+                {loadingProblems ? (
+                  <div className="flex items-center gap-2 p-3 border border-gray-300 rounded-md">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm text-gray-600">Loading problems...</span>
+                  </div>
+                ) : (
+                  <select
+                    id="problemId"
+                    value={questionData.problemId || ""}
+                    onChange={(e) => handleProblemSelect(e.target.value)}
+                    className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200"
+                  >
+                    <option value="">Select a problem</option>
+                    {availableProblems.map((problem) => (
+                      <option key={problem.id} value={problem.id}>
+                        {problem.title} ({problem.difficulty})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              {selectedProblem && (
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Code2 className="h-4 w-4 text-blue-600" />
+                    <span className="font-semibold text-blue-900">Problem Details</span>
+                  </div>
+                  <div className="text-sm text-blue-800 space-y-1">
+                    <p><strong>Title:</strong> {selectedProblem.title}</p>
+                    {selectedProblem.description && (
+                      <p><strong>Description:</strong> {selectedProblem.description.substring(0, 100)}...</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <strong>Method:</strong> <code className="text-xs">{selectedProblem.methodName}</code>
+                      </div>
+                      <div>
+                        <strong>Return Type:</strong> <code className="text-xs">{selectedProblem.returnType}</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Method Signature Preview (Read-only when problem selected) */}
+              {questionData.problemId && (
+                <div className="space-y-2">
+                  <Label>Method Signature (Auto-filled)</Label>
+                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <code className="text-sm text-gray-700">
+                      public {questionData.returnType || "?"} {questionData.methodName || "?"}(
+                      {questionData.parameterTypes || "input"} input)
+                    </code>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* MCQ Question Fields */}
+          {questionData.type === "MCQ" && (
+            <>
+              {/* Question Text */}
+              <div className="space-y-2">
+                <Label htmlFor="question">Question Text *</Label>
             <textarea
               id="question"
               placeholder="Enter your question here..."
@@ -351,6 +568,8 @@ const QuestionForm = ({
               className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition-colors duration-200"
             />
           </div>
+            </>
+          )}
         </div>
 
         {/* Preview Panel */}

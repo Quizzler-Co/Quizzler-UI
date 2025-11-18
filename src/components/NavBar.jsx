@@ -77,7 +77,7 @@ const NavBar = () => {
   //navigation links - data for routing
   const navigationLinks = [
     { href: "/quizzes", label: "Quizzes" },
-    { href: "/leaderboard", label: "Leaderboard" },
+    { href: "/problems", label: "Problems" },
     { href: "/about", label: "About" },
     { href: "/admin", label: "Admin", adminOnly: true },
   ];

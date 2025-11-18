@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Trophy,
   AlertCircle,
+  Code2,
 } from "lucide-react";
 import {
   Card,
@@ -19,10 +20,12 @@ import {
 import Button from "../ui-components/Button";
 import Badge from "../ui-components/Badge";
 import { Dialog } from "../ui-components/Dialog";
+import CodeEditor from "../CodeEditor";
 
 const QuizPlay = ({ quizData, onQuizComplete, onQuizExit }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [codingSolutions, setCodingSolutions] = useState({}); // Store coding question solutions
   const [timeRemaining, setTimeRemaining] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
@@ -47,14 +50,15 @@ const QuizPlay = ({ quizData, onQuizComplete, onQuizExit }) => {
 
     const results = {
       answers,
+      codingSolutions,
       timeTaken,
       totalQuestions,
-      answeredQuestions: Object.keys(answers).length,
+      answeredQuestions: Object.keys(answers).length + Object.keys(codingSolutions).length,
       quizId: quizData.quizId,
     };
 
     onQuizComplete(results);
-  }, [answers, totalQuestions, quizData.quizId, startTime, onQuizComplete]);
+  }, [answers, codingSolutions, totalQuestions, quizData.quizId, startTime, onQuizComplete]);
 
   // Timer logic
   useEffect(() => {
@@ -94,6 +98,13 @@ const QuizPlay = ({ quizData, onQuizComplete, onQuizExit }) => {
     });
   };
 
+  const handleCodingSolution = (questionId, solution) => {
+    setCodingSolutions({
+      ...codingSolutions,
+      [questionId]: solution,
+    });
+  };
+
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
@@ -120,7 +131,14 @@ const QuizPlay = ({ quizData, onQuizComplete, onQuizExit }) => {
   };
 
   const getAnsweredCount = () => {
-    return Object.keys(answers).length;
+    return Object.keys(answers).length + Object.keys(codingSolutions).length;
+  };
+
+  const isQuestionAnswered = (question) => {
+    if (question.type === "CODING") {
+      return codingSolutions[question.id] !== undefined;
+    }
+    return answers[question.id] !== undefined;
   };
 
   if (!quizData || !quizData.questions || quizData.questions.length === 0) {
@@ -227,42 +245,63 @@ const QuizPlay = ({ quizData, onQuizComplete, onQuizExit }) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="text-lg text-gray-900 leading-relaxed">
-            {currentQuestion.questionText}
-          </div>
+          {/* MCQ Question */}
+          {currentQuestion.type === "MCQ" || !currentQuestion.type ? (
+            <>
+              <div className="text-lg text-gray-900 leading-relaxed">
+                {currentQuestion.questionText || currentQuestion.question}
+              </div>
 
-          {/* Answer Options */}
-          <div className="space-y-3">
-            {currentQuestion.options.map((option, index) => {
-              const isSelected = answers[currentQuestion.id] === index;
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleAnswerSelect(index)}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
-                    isSelected
-                      ? "border-blue-500 bg-blue-50 text-blue-900"
-                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+              {/* Answer Options */}
+              <div className="space-y-3">
+                {currentQuestion.options?.map((option, index) => {
+                  const isSelected = answers[currentQuestion.id] === index;
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => handleAnswerSelect(index)}
+                      className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
                         isSelected
-                          ? "border-blue-500 bg-blue-500"
-                          : "border-gray-300"
+                          ? "border-blue-500 bg-blue-50 text-blue-900"
+                          : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                       }`}
                     >
-                      {isSelected && (
-                        <CheckCircle className="h-4 w-4 text-white" />
-                      )}
-                    </div>
-                    <span className="flex-1 text-base">{option}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                      <div className="flex items-center space-x-3">
+                        <div
+                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                            isSelected
+                              ? "border-blue-500 bg-blue-500"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {isSelected && (
+                            <CheckCircle className="h-4 w-4 text-white" />
+                          )}
+                        </div>
+                        <span className="flex-1 text-base">{option}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            /* Coding Question */
+            <CodeEditor
+              question={currentQuestion}
+              code={codingSolutions[currentQuestion.id]?.code || ""}
+              onChange={(code) => {
+                handleCodingSolution(currentQuestion.id, {
+                  ...codingSolutions[currentQuestion.id],
+                  code,
+                });
+              }}
+              onSubmit={(solution) => {
+                handleCodingSolution(currentQuestion.id, solution);
+              }}
+              submissionResult={codingSolutions[currentQuestion.id]?.submissionResult || null}
+            />
+          )}
         </CardContent>
       </Card>
 
@@ -306,24 +345,29 @@ const QuizPlay = ({ quizData, onQuizComplete, onQuizExit }) => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-10 gap-2">
-            {quizData.questions.map((_, index) => {
-              const isAnswered =
-                answers[quizData.questions[index].id] !== undefined;
+            {quizData.questions.map((question, index) => {
+              const isAnswered = isQuestionAnswered(question);
               const isCurrent = index === currentQuestionIndex;
+              const isCoding = question.type === "CODING";
 
               return (
                 <button
                   key={index}
                   onClick={() => handleQuestionJump(index)}
-                  className={`w-10 h-10 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${
+                  className={`w-10 h-10 rounded-lg border-2 text-sm font-medium transition-all duration-200 flex items-center justify-center ${
                     isCurrent
                       ? "border-blue-500 bg-blue-500 text-white"
                       : isAnswered
                       ? "border-green-500 bg-green-50 text-green-700"
                       : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
                   }`}
+                  title={isCoding ? "Coding Question" : "MCQ"}
                 >
-                  {index + 1}
+                  {isCoding ? (
+                    <Code2 className="h-4 w-4" />
+                  ) : (
+                    index + 1
+                  )}
                 </button>
               );
             })}

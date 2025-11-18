@@ -23,7 +23,7 @@ const CardHeader = ({ children, className = "" }) => {
 };
 
 const CardContent = ({ children, className = "" }) => {
-  return <div className={`p-6 pt-3 ${className}`}>{children}</div>;
+  return <div className={`p-6 pt-3 min-w-0 ${className}`}>{children}</div>;
 };
 
 const CardTitle = ({ children, className = "" }) => {

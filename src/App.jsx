@@ -9,6 +9,8 @@ import Profile from "./pages/Profile";
 import Quizzes from "./pages/Quizzes";
 import AboutUs from "./pages/AboutUs";
 import Leaderboard from "./pages/Leaderboard";
+import Problems from "./pages/Problems";
+import ProblemDetail from "./pages/ProblemDetail";
 
 const App = () => {
   return (
@@ -29,6 +31,8 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/quizzes" element={<Quizzes />} />
+                <Route path="/problems" element={<Problems />} />
+                <Route path="/problems/:problemId" element={<ProblemDetail />} />
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<Dashboard />} />
