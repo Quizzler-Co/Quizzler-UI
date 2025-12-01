@@ -78,25 +78,25 @@ const Footer = () => {
             {/* Navigation Links */}
             <nav className="flex flex-wrap items-center justify-center gap-6 lg:gap-8">
               <Link
-                to="https://github.com/Quizzler-Co/Quizzler"
+                to="/terms"
                 className="text-sm text-gray-600 hover:text-black transition-colors duration-200 hover:underline underline-offset-4"
               >
                 Terms of Service
               </Link>
               <Link
-                to="https://github.com/Quizzler-Co/Quizzler"
+                to="/privacy"
                 className="text-sm text-gray-600 hover:text-black transition-colors duration-200 hover:underline underline-offset-4"
               >
                 Privacy Policy
               </Link>
               <Link
-                to="https://github.com/Quizzler-Co/Quizzler"
+                to="/contact"
                 className="text-sm text-gray-600 hover:text-black transition-colors duration-200 hover:underline underline-offset-4"
               >
                 Contact Us
               </Link>
               <Link
-                to="https://github.com/Quizzler-Co/Quizzler"
+                to="/help"
                 className="text-sm text-gray-600 hover:text-black transition-colors duration-200 hover:underline underline-offset-4"
               >
                 Help Center

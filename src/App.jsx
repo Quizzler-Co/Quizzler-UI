@@ -11,6 +11,10 @@ import AboutUs from "./pages/AboutUs";
 import Leaderboard from "./pages/Leaderboard";
 import Problems from "./pages/Problems";
 import ProblemDetail from "./pages/ProblemDetail";
+import TermsOfService from "./pages/TermsOfService";
+import HelpCenter from "./pages/HelpCenter";
+import ContactUs from "./pages/ContactUs";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const App = () => {
   return (
@@ -34,6 +38,10 @@ const App = () => {
                 <Route path="/problems" element={<Problems />} />
                 <Route path="/problems/:problemId" element={<ProblemDetail />} />
                 <Route path="/about" element={<AboutUs />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/contact" element={<ContactUs />} />
+                <Route path="/help" element={<HelpCenter />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<Dashboard />} />
                 <Route path="/leaderboard/:quizId" element={<Leaderboard />} />
