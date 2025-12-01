@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { authenticatedFetch } from "../../utils/auth";
+import { API_BASE_URL } from "../../config/api";
 import Button from "../ui-components/Button";
 import { Card } from "../ui-components/Card";
 import {
@@ -38,7 +39,7 @@ const QuizItem = ({ quiz, onQuizDeleted }) => {
     setIsDeleting(true);
     try {
       const response = await authenticatedFetch(
-        `http://localhost:8086/api/v1/quiz/${quiz.id}`,
+        `${API_BASE_URL}/quiz/${quiz.id}`,
         {
           method: "DELETE",
         }
@@ -198,7 +199,7 @@ const QuizManagement = () => {
         setLoading(true);
         setError(null);
         const response = await authenticatedFetch(
-          "http://localhost:8086/api/v1/quiz/"
+          `${API_BASE_URL}/quiz/`
         );
 
         if (!response.ok) {

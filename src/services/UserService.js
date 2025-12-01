@@ -3,6 +3,8 @@
  * Handles all user-related operations including profile management, authentication, and user data
  */
 
+import { API_BASE_URL } from '../config/api';
+
 export class UserService {
   // Validate user profile data
   static validateProfile(userData) {
@@ -290,30 +292,63 @@ export class UserService {
   // Authentication API calls
   static async register(userData) {
     try {
-      const response = await fetch(
-        "http://localhost:8086/api/v1/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: `${userData.firstName} ${userData.lastName}`.trim(),
-            username: userData.username.trim(), // Using email as username for simplicity
-            email: userData.email,
-            password: userData.password,
-          }),
-        }
-      );
+      const url = `${API_BASE_URL}/auth/register`;
+      const requestBody = {
+        name: `${userData.firstName} ${userData.lastName}`.trim(),
+        username: userData.username.trim(), // Using email as username for simplicity
+        email: userData.email,
+        password: userData.password,
+      };
+
+      console.log("Registration request:", {
+        url: url,
+        method: "POST",
+        body: { ...requestBody, password: "***" }, // Don't log actual password
+      });
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("Registration response:", {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        url: response.url,
+      });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData = {};
+        try {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            errorData = await response.json();
+          } else {
+            const text = await response.text();
+            errorData = { message: text || `Registration failed: ${response.status}` };
+          }
+        } catch (parseError) {
+          console.error("Error parsing error response:", parseError);
+          errorData = { message: `Registration failed: ${response.status} ${response.statusText}` };
+        }
+        
+        console.error("Registration error details:", {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+        });
+        
         throw new Error(
-          errorData.message || `Registration failed: ${response.status}`
+          errorData.message || errorData.error || `Registration failed: ${response.status}`
         );
       }
 
       const data = await response.json();
+      console.log("Registration successful:", data);
 
       return {
         success: true,
@@ -321,6 +356,7 @@ export class UserService {
         message: "Account created successfully",
       };
     } catch (error) {
+      console.error("Registration exception:", error);
       throw new Error(error.message || "Network error occurred");
     }
   }
@@ -333,11 +369,11 @@ export class UserService {
       };
       
       console.log("Login request:", {
-        url: "http://localhost:8086/api/v1/auth/login",
+        url: `${API_BASE_URL}/auth/login`,
         body: { ...requestBody, password: "***" }, // Don't log actual password
       });
 
-      const response = await fetch("http://localhost:8086/api/v1/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -350,12 +386,15 @@ export class UserService {
         statusText: response.statusText,
         headers: Object.fromEntries(response.headers.entries()),
         ok: response.ok,
+        url: response.url,
       });
 
       // Try to read response body for debugging even on error
       if (!response.ok) {
         const responseText = await response.clone().text().catch(() => "Unable to read response");
-        console.error("Error response body:", responseText);
+        console.error("Error response body (raw):", responseText);
+        console.error("Response URL:", response.url);
+        console.error("Response status:", response.status, response.statusText);
         let errorData = {};
         try {
           const contentType = response.headers.get("content-type");
@@ -395,7 +434,29 @@ export class UserService {
         throw new Error(errorMessage || `Login failed: ${response.status}`);
       }
 
-      const data = await response.json();
+      // Parse response - handle both success and error cases
+      let data;
+      try {
+        const responseText = await response.text();
+        console.log("Login response text (first 200 chars):", responseText.substring(0, 200));
+        
+        if (responseText) {
+          data = JSON.parse(responseText);
+        } else {
+          throw new Error("Empty response from server");
+        }
+      } catch (parseError) {
+        console.error("Error parsing login response:", parseError);
+        throw new Error("Invalid response format from server");
+      }
+      
+      console.log("Login response data:", { 
+        ...data, 
+        accessToken: data.accessToken ? `${data.accessToken.substring(0, 20)}...` : undefined,
+        tokenType: data.tokenType,
+        username: data.username,
+        email: data.email
+      });
 
       // Store the token in localStorage if remember me is checked
       if (credentials.rememberMe && data.accessToken) {
@@ -486,7 +547,7 @@ export class UserService {
 
       // Fetch user data from API
       const token = this.getAuthToken();
-      const response = await fetch("http://localhost:8086/api/v1/auth/user", {
+      const response = await fetch(`${API_BASE_URL}/auth/user`, {
         method: "GET",
         headers: {
           Authorization: token,
@@ -530,7 +591,7 @@ export class UserService {
       }
 
       const token = this.getAuthToken();
-      const response = await fetch("http://localhost:8086/api/v1/auth/users", {
+      const response = await fetch(`${API_BASE_URL}/auth/users`, {
         method: "GET",
         headers: {
           Authorization: token,

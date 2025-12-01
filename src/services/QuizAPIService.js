@@ -4,6 +4,7 @@
  */
 
 import { UserService } from "./UserService";
+import { API_BASE_URL } from '../config/api';
 
 export class QuizAPIService {
   // Create a new quiz
@@ -21,9 +22,9 @@ export class QuizAPIService {
       const transformedData = this.transformQuizData(quizData);
 
       console.log("Sending quiz data to backend:", transformedData);
-      console.log("API endpoint: http://localhost:8086/api/v1/quiz/create");
+      console.log("API endpoint:", `${API_BASE_URL}/quiz/create`);
 
-      const response = await fetch("http://localhost:8086/api/v1/quiz/create", {
+      const response = await fetch(`${API_BASE_URL}/quiz/create`, {
         method: "POST",
         headers: {
           Authorization: token,
@@ -69,7 +70,7 @@ export class QuizAPIService {
           }
         } else if (response.status === 404) {
           throw new Error(
-            "API endpoint not found. Please check if the backend server is running on localhost:8086"
+            `API endpoint not found. Please check if the backend server is running on ${API_BASE_URL}`
           );
         }
 
@@ -131,7 +132,7 @@ export class QuizAPIService {
       }
 
       const token = UserService.getAuthToken();
-      const response = await fetch("http://localhost:8086/api/v1/quiz/all", {
+      const response = await fetch(`${API_BASE_URL}/quiz/all`, {
         method: "GET",
         headers: {
           Authorization: token,
@@ -172,7 +173,7 @@ export class QuizAPIService {
 
       const token = UserService.getAuthToken();
       const response = await fetch(
-        `http://localhost:8086/api/v1/quiz/${quizId}`,
+        `${API_BASE_URL}/quiz/${quizId}`,
         {
           method: "GET",
           headers: {
@@ -219,7 +220,7 @@ export class QuizAPIService {
       const transformedData = this.transformQuizData(quizData);
 
       const response = await fetch(
-        `http://localhost:8086/api/v1/quiz/${quizId}`,
+        `${API_BASE_URL}/quiz/${quizId}`,
         {
           method: "PUT",
           headers: {
@@ -274,7 +275,7 @@ export class QuizAPIService {
 
       const token = UserService.getAuthToken();
       const response = await fetch(
-        `http://localhost:8086/api/v1/quiz/${quizId}`,
+        `${API_BASE_URL}/quiz/${quizId}`,
         {
           method: "DELETE",
           headers: {

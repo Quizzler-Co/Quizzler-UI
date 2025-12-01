@@ -17,6 +17,7 @@ import {
 } from "../components/ui-components/Card";
 import Badge from "../components/ui-components/Badge";
 import { UserService } from "../services/UserService";
+import { API_BASE_URL } from "../config/api";
 
 // Helper to map rank to medal color/icon styling
 const RankMedal = ({ rank }) => {
@@ -62,7 +63,7 @@ const Leaderboard = () => {
       setError(null);
       const token = UserService.getAuthToken();
       const res = await fetch(
-        `http://localhost:8086/api/v1/leaderboard/quiz/${quizId}`,
+        `${API_BASE_URL}/leaderboard/quiz/${quizId}`,
         {
           headers: { Authorization: token, "Content-Type": "application/json" },
         }

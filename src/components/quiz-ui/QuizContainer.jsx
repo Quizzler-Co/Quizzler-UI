@@ -4,6 +4,7 @@ import QuizPlay from "./QuizPlay";
 import QuizResults from "./QuizResults";
 import Button from "../ui-components/Button";
 import { UserService } from "../../services/UserService";
+import { API_BASE_URL } from "../../config/api";
 
 const QuizContainer = ({ quizId, onBackToQuizzes }) => {
   const [quizData, setQuizData] = useState(null);
@@ -18,7 +19,7 @@ const QuizContainer = ({ quizId, onBackToQuizzes }) => {
       const token = UserService.getAuthToken();
 
       const response = await fetch(
-        `http://localhost:8086/api/v1/participation/quiz/${quizId}`,
+        `${API_BASE_URL}/participation/quiz/${quizId}`,
         {
           method: "POST",
           headers: {
@@ -53,7 +54,7 @@ const QuizContainer = ({ quizId, onBackToQuizzes }) => {
 
       // Then fetch quiz data
       const response = await fetch(
-        `http://localhost:8086/api/v1/quiz/with-questions/${quizId}`,
+        `${API_BASE_URL}/quiz/with-questions/${quizId}`,
         {
           method: "GET",
           headers: {
@@ -119,7 +120,7 @@ const QuizContainer = ({ quizId, onBackToQuizzes }) => {
       const submissionPayload = { answers: answersArray };
 
       const response = await fetch(
-        `http://localhost:8086/api/v1/participation/${participationData.participationId}/submit`,
+        `${API_BASE_URL}/participation/${participationData.participationId}/submit`,
         {
           method: "POST",
           headers: {

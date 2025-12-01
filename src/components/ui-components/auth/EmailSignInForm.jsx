@@ -2,7 +2,7 @@
  * EmailSignInForm Component
  *
  * A form component for user email/password authentication.
- * Integrates with the backend API at http://localhost:8086/api/v1/auth/login
+ * Integrates with the backend API (configured via VITE_API_URL environment variable)
  *
  * Features:
  * - Email/password validation

@@ -4,6 +4,7 @@
  */
 
 import { UserService } from "./UserService";
+import { API_BASE_URL } from '../config/api';
 
 export class JudgeService {
   // Get all problems with optional difficulty filter
@@ -14,7 +15,7 @@ export class JudgeService {
       }
 
       const token = UserService.getAuthToken();
-      let url = "http://localhost:8086/api/v1/judge/problems";
+      let url = `${API_BASE_URL}/judge/problems`;
       
       if (difficulty && ["EASY", "MEDIUM", "HARD"].includes(difficulty)) {
         url += `?difficulty=${difficulty}`;
@@ -32,7 +33,7 @@ export class JudgeService {
         // Handle network errors (CORS, connection refused, etc.)
         console.error("Network error fetching problems:", fetchError);
         if (fetchError.message.includes("Failed to fetch") || fetchError.message.includes("NetworkError")) {
-          throw new Error("Unable to connect to the server. Please check if the backend service is running on http://localhost:8086");
+          throw new Error(`Unable to connect to the server. Please check if the backend service is running on ${API_BASE_URL}`);
         }
         throw new Error(`Network error: ${fetchError.message}`);
       });
@@ -83,7 +84,7 @@ export class JudgeService {
       }
 
       const token = UserService.getAuthToken();
-      const url = `http://localhost:8086/api/v1/judge/problems/${problemId}`;
+      const url = `${API_BASE_URL}/judge/problems/${problemId}`;
       
       console.log("Fetching problem from:", url);
 
@@ -97,7 +98,7 @@ export class JudgeService {
         // Handle network errors
         console.error("Network error fetching problem:", fetchError);
         if (fetchError.message.includes("Failed to fetch") || fetchError.message.includes("NetworkError")) {
-          throw new Error("Unable to connect to the server. Please check if the backend service is running on http://localhost:8086");
+          throw new Error(`Unable to connect to the server. Please check if the backend service is running on ${API_BASE_URL}`);
         }
         throw new Error(`Network error: ${fetchError.message}`);
       });
@@ -153,7 +154,7 @@ export class JudgeService {
       }
 
       const token = UserService.getAuthToken();
-      const url = "http://localhost:8086/api/v1/judge/submit";
+      const url = `${API_BASE_URL}/judge/submit`;
       
       console.log("Submitting code to:", url);
 
@@ -171,7 +172,7 @@ export class JudgeService {
         // Handle network errors
         console.error("Network error submitting code:", fetchError);
         if (fetchError.message.includes("Failed to fetch") || fetchError.message.includes("NetworkError")) {
-          throw new Error("Unable to connect to the server. Please check if the backend service is running on http://localhost:8086");
+          throw new Error(`Unable to connect to the server. Please check if the backend service is running on ${API_BASE_URL}`);
         }
         throw new Error(`Network error: ${fetchError.message}`);
       });

@@ -11,6 +11,7 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserService } from "../services/UserService";
+import { API_BASE_URL } from "../config/api";
 import { QuizContainer, QuizPreviewCard } from "./quiz-ui";
 import Badge from "./ui-components/Badge";
 import {
@@ -21,6 +22,7 @@ import {
   CardTitle,
 } from "./ui-components/Card";
 import QuizButton from "./ui-components/QuizButton";
+import { AuthModal } from "./ui-components/auth";
 
 const Quiz = () => {
   const [quizzes, setQuizzes] = useState([]);
@@ -28,7 +30,15 @@ const Quiz = () => {
   const [error, setError] = useState(null);
   const [selectedQuizId, setSelectedQuizId] = useState(null);
   const [previewQuiz, setPreviewQuiz] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Handler to open auth modal
+  const handleOpenAuthModal = () => {
+    console.log("handleOpenAuthModal called");
+    setIsAuthModalOpen(true);
+    console.log("isAuthModalOpen set to true");
+  };
 
   useEffect(() => {
     fetchQuizzes();
@@ -39,7 +49,14 @@ const Quiz = () => {
       setLoading(true);
       const token = UserService.getAuthToken();
 
-      const response = await fetch("http://localhost:8086/api/v1/quiz/", {
+      // Check if user is logged in
+      if (!token) {
+        setError("Please log in to view quizzes");
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/quiz/`, {
         method: "GET",
         headers: {
           Authorization: token,
@@ -48,7 +65,38 @@ const Quiz = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch quizzes: ${response.status}`);
+        // Handle authentication errors
+        if (response.status === 401 || response.status === 403) {
+          setError("Please log in to view quizzes");
+          // Clear invalid token
+          UserService.logout();
+          setIsAuthModalOpen(true);
+          return;
+        }
+        
+        // Handle 500 errors - might be authentication related
+        if (response.status === 500) {
+          // Try to parse error message to see if it's auth-related
+          try {
+            const errorData = await response.json();
+            if (errorData.message && (
+              errorData.message.toLowerCase().includes("unauthorized") ||
+              errorData.message.toLowerCase().includes("authentication") ||
+              errorData.message.toLowerCase().includes("token")
+            )) {
+              setError("Please log in to view quizzes");
+              UserService.logout();
+              setIsAuthModalOpen(true);
+              return;
+            }
+          } catch (e) {
+            // If we can't parse, show generic message
+          }
+          setError("Unable to load quizzes. Please try again later.");
+        } else {
+          setError(`Failed to load quizzes. Please try again.`);
+        }
+        return;
       }
 
       const data = await response.json();
@@ -56,7 +104,14 @@ const Quiz = () => {
       setError(null);
     } catch (err) {
       console.error("Error fetching quizzes:", err);
-      setError(err.message);
+      // Check if it's a network error or auth-related
+      if (err.message.includes("401") || err.message.includes("403") || err.message.includes("Unauthorized")) {
+        setError("Please log in to view quizzes");
+        UserService.logout();
+        setIsAuthModalOpen(true);
+      } else {
+        setError("Unable to load quizzes. Please check your connection and try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -125,19 +180,54 @@ const Quiz = () => {
   }
 
   if (error) {
+    const isAuthError = error.includes("log in") || error.includes("Please log in");
+    
     return (
-      <div className="p-6">
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <h3 className="text-red-800 font-medium">Error Loading Quizzes</h3>
-          <p className="text-red-600 mt-1">{error}</p>
-          <button
-            onClick={fetchQuizzes}
-            className="mt-3 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-          >
-            Try Again
-          </button>
+      <>
+        <div className="p-6">
+          <div className="bg-red-50 border border-red-200 rounded-md p-6 max-w-md mx-auto">
+            <h3 className="text-red-800 font-medium text-lg mb-2">
+              {isAuthError ? "Authentication Required" : "Error Loading Quizzes"}
+            </h3>
+            <p className="text-red-600 mt-1 mb-4">{error}</p>
+            <div className="flex gap-3">
+            {isAuthError ? (
+              <button
+                type="button"
+                onClick={handleOpenAuthModal}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors cursor-pointer"
+              >
+                Go to Login
+              </button>
+            ) : (
+                <button
+                  onClick={fetchQuizzes}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              )}
+              {!isAuthError && (
+                <button
+                  onClick={() => navigate("/")}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  Go Home
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+        {/* Auth Modal - needed here for error state */}
+        <AuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => {
+            console.log("Closing auth modal");
+            setIsAuthModalOpen(false);
+          }}
+          defaultTab="signin"
+        />
+      </>
     );
   }
 
@@ -349,6 +439,13 @@ const Quiz = () => {
           onClose={handleClosePreview}
         />
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        defaultTab="signin"
+      />
     </div>
   );
 };

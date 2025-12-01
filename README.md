@@ -141,17 +141,56 @@ Routes under `/*` render with `NavBar` and `Footer` automatically.
 
 ## API & Environment
 
-The UI communicates with a backend API. Current endpoints are hardcoded to `http://localhost:8086` in the services layer:
+The UI communicates with a backend API using **relative paths** (`/api/v1`). This ensures compatibility with both local development and Cloudflare Tunnel deployment.
+
+### Configuration
+
+**No environment variables needed!** The frontend uses relative API paths that work automatically:
+
+- **Local development**: Vite proxy forwards `/api/*` to `http://localhost:8086`
+- **Cloudflare Tunnel**: Both frontend and backend are served on the same domain, so relative paths work directly
+
+The API base URL is centralized in `src/config/api.js` and set to `/api/v1`.
+
+### Cloudflare Tunnel Deployment (Frontend Only)
+
+When deploying with Cloudflare Tunnel:
+
+1. **No frontend changes needed** - relative paths work automatically
+2. **Backend stays on localhost** - NOT directly exposed
+3. **Configure Cloudflare Tunnel** to:
+   - Serve frontend static files from `dist/` (after `npm run build`)
+   - Proxy `/api/*` requests to `http://localhost:8086` (backend on your machine)
+
+**Important:** The backend is only accessible through Cloudflare Tunnel's proxy, not directly from the internet.
+
+Example `cloudflared` configuration:
+```yaml
+tunnel: your-tunnel-id
+credentials-file: /path/to/credentials.json
+
+ingress:
+  # Frontend static files
+  - hostname: your-app.example.com
+    service: file_server: /path/to/dist
+  
+  # Proxy API requests to localhost backend
+  - path: /api/*
+    service: http://localhost:8086
+  
+  # Catch-all
+  - service: http_status:404
+```
+
+**Backend CORS:** Your backend needs to allow your Cloudflare Tunnel domain. See `BACKEND_CHANGES.md` for details.
+
+### API Endpoints
 
 - Auth: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/auth/user`, `GET /api/v1/auth/users`
 - Quiz: `POST /api/v1/quiz/create`, `GET /api/v1/quiz/all`, `GET /api/v1/quiz/:id`, `PUT /api/v1/quiz/:id`, `DELETE /api/v1/quiz/:id`
-
-To change the API base URL, update the fetch calls in:
-
-- `src/services/UserService.js`
-- `src/services/QuizAPIService.js`
-
-Suggested improvement (future): move the base URL to a Vite env variable, for example `VITE_API_BASE_URL`, and read it in the services.
+- Judge: `GET /api/v1/judge/problems`, `GET /api/v1/judge/problems/:id`, `POST /api/v1/judge/submit`
+- Participation: `POST /api/v1/participation/quiz/:quizId`, `POST /api/v1/participation/:id/submit`
+- Leaderboard: `GET /api/v1/leaderboard/quiz/:quizId`
 
 ## Auth Model
 
@@ -174,8 +213,14 @@ Security note: Storing tokens in web storage is convenient but exposes them to X
 
 ### Troubleshooting
 
-- Backend unavailable (404/ECONNREFUSED): ensure your API runs on `http://localhost:8086`
-- CORS errors: configure your backend CORS to allow the Vite dev origin (e.g., `http://localhost:5173`)
+- Backend unavailable (404/ECONNREFUSED): 
+  - Ensure your API is running on `http://localhost:8086`
+  - In development, Vite proxy automatically forwards `/api/*` requests
+  - Check that the proxy is configured in `vite.config.js`
+- CORS errors: 
+  - In development: ensure backend CORS allows `http://localhost:5173`
+  - In production: ensure backend CORS allows your Cloudflare Tunnel domain (e.g., `https://your-app.trycloudflare.com`)
+  - See `BACKEND_CHANGES.md` for CORS configuration details
 - Port conflicts: pass `--port <n>` to Vite dev if 5173 is in use
 - Blank screen: check console errors and ensure your Node version is up to date
 

@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { authenticatedFetch } from "../../utils/auth";
+import { API_BASE_URL } from "../../config/api";
 import Button from "../ui-components/Button";
 import { Card } from "../ui-components/Card";
 import {
@@ -40,7 +41,7 @@ const BlogItem = ({ blog, onBlogDeleted }) => {
     try {
       // TODO: Replace with actual blog API endpoint when available
       const response = await authenticatedFetch(
-        `http://localhost:8086/api/v1/blog/${blog.id}`,
+        `${API_BASE_URL}/blog/${blog.id}`,
         {
           method: "DELETE",
         }
@@ -217,7 +218,7 @@ const BlogManagement = () => {
         setError(null);
         // TODO: Replace with actual blog API endpoint when available
         const response = await authenticatedFetch(
-          "http://localhost:8086/api/v1/blog/"
+          `${API_BASE_URL}/blog/`
         );
 
         if (!response.ok) {
