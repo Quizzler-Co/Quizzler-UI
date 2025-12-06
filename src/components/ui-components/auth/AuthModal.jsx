@@ -1,5 +1,6 @@
 import { Brain } from "lucide-react";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,8 @@ import OTPSignInForm from "./OTPSignInForm";
 import SignUpForm from "./SignUpForm";
 
 const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }) => {
+  const navigate = useNavigate();
+
   const handleEmailSignIn = (result) => {
     console.log("Email sign in:", result);
 
@@ -24,11 +27,8 @@ const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }) => {
       // Close the modal
       onClose();
 
-      // You can add additional logic here such as:
-      // - Redirecting to dashboard
-      // - Updating global auth state
-      // - Showing success message
-      // window.location.reload(); // If you want to refresh the page
+      // Redirect to quizzes page
+      navigate("/quizzes");
     } else {
       // Handle login failure (though this should be handled in the form itself)
       console.error("Login failed:", result);
@@ -37,7 +37,10 @@ const AuthModal = ({ isOpen, onClose, defaultTab = "signin" }) => {
 
   const handleOTPSignIn = (data) => {
     console.log("OTP sign in:", data);
+    toast.success("Logged-in successfully");
     onClose();
+    // Redirect to quizzes page
+    navigate("/quizzes");
   };
 
   const handleSignUp = (data) => {
