@@ -9,7 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { UserService } from "../services/UserService";
 import { API_BASE_URL } from "../config/api";
 import { QuizContainer, QuizPreviewCard } from "./quiz-ui";
@@ -32,6 +32,7 @@ const Quiz = () => {
   const [previewQuiz, setPreviewQuiz] = useState(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Handler to open auth modal
   const handleOpenAuthModal = () => {
@@ -41,8 +42,12 @@ const Quiz = () => {
   };
 
   useEffect(() => {
-    fetchQuizzes();
-  }, []);
+    // Only fetch when on quizzes page
+    if (location.pathname === "/quizzes") {
+      fetchQuizzes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   const fetchQuizzes = async () => {
     try {
