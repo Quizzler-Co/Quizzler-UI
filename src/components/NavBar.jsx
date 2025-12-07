@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Brain, Menu, X, LogOut } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Button from "./ui-components/Button";
 import SearchBar from "./ui-components/SearchBar";
 import ProfileAvatar from "./ui-components/ProfileAvatar";
@@ -9,6 +9,7 @@ import { isAuthenticated, logout } from "../utils/auth";
 import { UserService } from "../services/UserService";
 
 const NavBar = () => {
+  const location = useLocation();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [defaultTab, setDefaultTab] = useState("signin");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -40,7 +41,8 @@ const NavBar = () => {
     }
   };
 
-  // Check authentication status on component mount and when auth modal closes
+  // Check authentication status on component mount, route changes, and when auth modal closes
+  // This ensures auth state is maintained when using browser back/forward buttons
   useEffect(() => {
     const checkAuthAndUser = async () => {
       const authStatus = isAuthenticated();
@@ -72,7 +74,7 @@ const NavBar = () => {
     };
 
     checkAuthAndUser();
-  }, [isAuthModalOpen]);
+  }, [isAuthModalOpen, location.pathname]);
 
   //navigation links - data for routing
   const navigationLinks = [
